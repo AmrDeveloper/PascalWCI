@@ -1,4 +1,4 @@
-package frontend;
+package backend;
 
 import intermediate.ICode;
 import intermediate.SymbolTable;
@@ -7,44 +7,31 @@ import message.MessageHandler;
 import message.MessageListener;
 import message.MessageProducer;
 
-public abstract class Parser implements MessageProducer {
+public abstract class Backend implements MessageProducer {
 
-    protected static SymbolTable symTab;
     protected static MessageHandler messageHandler;
 
-    protected Scanner scanner;
-    protected ICode iCode;
-
     static {
-        symTab = null;
         messageHandler = new MessageHandler();
     }
 
-    protected Parser(Scanner scanner)    {
-        this.scanner = scanner;
-    }
+    protected SymbolTable symbolTable;
+    protected ICode iCode;
 
-    public abstract void parse()  throws Exception;
-
-    public abstract int getErrorCount();
-
-    public Token currentToken() {
-        return scanner.currentToken();
-    }
-
-    public Token nextToken() throws Exception {
-        return scanner.nextToken();
-    }
-
+    @Override
     public void addMessageListener(MessageListener listener) {
         messageHandler.addListener(listener);
     }
 
+    @Override
     public void removeMessageListener(MessageListener listener) {
         messageHandler.removeListener(listener);
     }
 
+    @Override
     public void sendMessage(Message message) {
         messageHandler.sendMessage(message);
     }
+
+    public abstract void process(ICode iCode, SymbolTable symbolTable) throws Exception;
 }
