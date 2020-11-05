@@ -1,9 +1,11 @@
 package frontend;
 
+import message.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 
-public class Source {
+public class Source implements MessageProducer {
 
     public static final char EOL = '\n';
     public static final char EOF = (char) 0;
@@ -12,6 +14,11 @@ public class Source {
     private String line;
     private int lineNum;
     private int currentPosition;
+    protected static MessageHandler messageHandler;
+
+    static {
+        messageHandler = new MessageHandler();
+    }
 
     public Source(BufferedReader reader) throws IOException {
         this.lineNum = 0;
@@ -54,8 +61,10 @@ public class Source {
     private void readLine() throws Exception {
         line = reader.readLine();
         currentPosition = -1;
+
         if(line != null) {
             ++lineNum;
+            sendMessage(new Message(MessageType.SOURCE_LINE, new Object[] {lineNum, lineNum}));
         }
     }
 
@@ -76,5 +85,17 @@ public class Source {
 
     public int getCurrentPosition() {
         return currentPosition;
+    }
+
+    public void addMessageListener(MessageListener listener) {
+        messageHandler.addListener(listener);
+    }
+
+    public void removeMessageListener(MessageListener listener) {
+        messageHandler.removeListener(listener);
+    }
+
+    public void sendMessage(Message message) {
+        messageHandler.sendMessage(message);
     }
 }
