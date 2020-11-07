@@ -33,4 +33,24 @@ public class Token {
     protected char peekChar() throws Exception {
         return source.peekChar();
     }
+
+    public TokenType getType() {
+        return type;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    public int getLineNumber() {
+        return lineNum;
+    }
+
+    public int getPosition() {
+        return position;
+    }
 }
