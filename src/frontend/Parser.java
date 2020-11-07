@@ -2,6 +2,8 @@ package frontend;
 
 import intermediate.ICode;
 import intermediate.SymbolTable;
+import intermediate.SymbolTableFactory;
+import intermediate.SymbolTableStack;
 import message.Message;
 import message.MessageHandler;
 import message.MessageListener;
@@ -9,14 +11,15 @@ import message.MessageProducer;
 
 public abstract class Parser implements MessageProducer {
 
-    protected static SymbolTable symTab;
+    //protected static SymbolTable symbolTable;
+    protected static SymbolTableStack symbolTableStack;
     protected static MessageHandler messageHandler;
 
     protected Scanner scanner;
     protected ICode iCode;
 
     static {
-        symTab = null;
+        symbolTableStack = SymbolTableFactory.createSymbolTableStack();
         messageHandler = new MessageHandler();
     }
 
@@ -52,7 +55,7 @@ public abstract class Parser implements MessageProducer {
         return iCode;
     }
 
-    public SymbolTable getSymbolTable() {
-        return symTab;
+    public SymbolTableStack getSymbolTableStack() {
+        return symbolTableStack;
     }
 }

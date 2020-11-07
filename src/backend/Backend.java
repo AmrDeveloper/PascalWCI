@@ -2,6 +2,7 @@ package backend;
 
 import intermediate.ICode;
 import intermediate.SymbolTable;
+import intermediate.SymbolTableStack;
 import message.Message;
 import message.MessageHandler;
 import message.MessageListener;
@@ -33,5 +34,5 @@ public abstract class Backend implements MessageProducer {
         messageHandler.sendMessage(message);
     }
 
-    public abstract void process(ICode iCode, SymbolTable symbolTable) throws Exception;
+    public abstract void process(ICode iCode, SymbolTableStack symbolTable) throws Exception;
 }

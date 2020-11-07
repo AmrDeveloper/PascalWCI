@@ -1,6 +1,7 @@
 package frontend.pascal;
 
 import frontend.*;
+import intermediate.SymbolTableEntry;
 import message.Message;
 import message.MessageType;
 
@@ -8,6 +9,7 @@ import java.io.IOException;
 
 import static frontend.pascal.PascalErrorCode.IO_ERROR;
 import static frontend.pascal.PascalTokenType.ERROR;
+import static frontend.pascal.PascalTokenType.IDENTIFIER;
 import static message.MessageType.TOKEN;
 
 //Top Down Pascal Parser
@@ -27,27 +29,26 @@ public class PascalParserTD extends Parser {
         try {
             while (!((token = nextToken()) instanceof EofToken)) {
                 TokenType tokenType = token.getType();
-                if(tokenType != ERROR) {
-                    sendMessage(new Message(TOKEN,
-                                            new Object[] {token.getLineNumber(),
-                                                token.getPosition(),
-                                                tokenType,
-                                                token.getText(),
-                                                token.getValue()}));
+                if (tokenType == IDENTIFIER) {
+                    String name = token.getText().toLowerCase();
+
+                    SymbolTableEntry entry = symbolTableStack.lookup(name);
+                    if (entry == null) {
+                        entry = symbolTableStack.enterLocal(name);
+                    }
+
+                    entry.appendLineNumber(token.getLineNumber());
+                } else if (tokenType == ERROR) {
+                    errorHandler.flag(token, (PascalErrorCode) token.getValue(), this);
                 }
-                else{
-                    errorHandler.flag(token, (PascalErrorCode) token.getValue(), this) ;
-                }
+                float elapsedTime = (System.currentTimeMillis() - startTime) / 1000f;
+
+                sendMessage(new Message(MessageType.PARSER_SUMMARY, new Number[]{
+                        token.getLineNumber(),
+                        getErrorCount(),
+                        elapsedTime}));
             }
-
-            float elapsedTime = (System.currentTimeMillis() - startTime) / 1000f;
-
-            sendMessage(new Message(MessageType.PARSER_SUMMARY, new Number[]{
-                    token.getLineNumber(),
-                    getErrorCount(),
-                    elapsedTime}));
-
-        }catch (IOException ex) {
+        } catch (IOException ex) {
             errorHandler.abortTranslation(IO_ERROR, this);
         }
 

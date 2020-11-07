@@ -5,20 +5,23 @@ import frontend.Parser;
 import frontend.Source;
 import frontend.TokenType;
 import intermediate.ICode;
-import intermediate.SymbolTable;
+import intermediate.SymbolTableStack;
 import message.Message;
 import message.MessageListener;
 import message.MessageType;
+import util.CrossReferencer;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+
+import static frontend.pascal.PascalTokenType.STRING;
 
 public class Pascal {
 
     private Parser parser;
     private Source source;
     private ICode iCode;
-    private SymbolTable symbolTable;
+    private SymbolTableStack symbolTableStack;
     private Backend backend;
 
     public Pascal(String operation, String filePath, String flags) {
@@ -39,8 +42,14 @@ public class Pascal {
             source.close();
 
             iCode = parser.getICode();
-            symbolTable = parser.getSymbolTable();
+            symbolTableStack = parser.getSymbolTableStack();
 
+            if(xref) {
+                CrossReferencer crossReferencer = new CrossReferencer();
+                crossReferencer.print(symbolTableStack);
+            }
+
+            backend.process(iCode, symbolTableStack);
         }catch (Exception e) {
             System.out.println("Internal Translator Error");
             e.printStackTrace();
