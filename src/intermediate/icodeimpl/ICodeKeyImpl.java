@@ -1,5 +1,7 @@
 package intermediate.icodeimpl;
 
-public enum ICodeKeyImpl {
+import intermediate.ICodeKey;
+
+public enum ICodeKeyImpl implements ICodeKey {
     LINE, ID, VALUE;
 }

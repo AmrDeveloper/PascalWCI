@@ -10,6 +10,7 @@ import message.Message;
 import message.MessageListener;
 import message.MessageType;
 import util.CrossReferencer;
+import util.ParseTreePrinter;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -47,6 +48,12 @@ public class Pascal {
             if(xref) {
                 CrossReferencer crossReferencer = new CrossReferencer();
                 crossReferencer.print(symbolTableStack);
+            }
+
+            if(intermediate) {
+                ParseTreePrinter treePrinter =
+                        new ParseTreePrinter(System.out);
+                treePrinter.print(iCode);
             }
 
             backend.process(iCode, symbolTableStack);

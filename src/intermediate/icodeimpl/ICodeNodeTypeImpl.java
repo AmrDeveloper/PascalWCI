@@ -2,7 +2,7 @@ package intermediate.icodeimpl;
 
 import intermediate.ICodeNodeType;
 
-public enum  ICodeNodeTypeImpl implements ICodeNodeType {
+public enum ICodeNodeTypeImpl implements ICodeNodeType {
     // Program structure
     PROGRAM, PROCEDURE, FUNCTION,
 
