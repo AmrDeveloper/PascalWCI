@@ -30,7 +30,6 @@ public class PascalParserTD extends Parser {
 
     @Override
     public void parse() throws Exception {
-
         long startTime = System.currentTimeMillis();
         iCode = ICodeFactory.createICode();
 
@@ -50,8 +49,6 @@ public class PascalParserTD extends Parser {
             if(token.getType() != DOT) {
                 errorHandler.flag(token, MISSING_PERIOD, this);
             }
-
-            System.out.println(token.getType());
 
             if(rootNode != null) {
                 iCode.setRoot(rootNode);

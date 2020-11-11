@@ -29,7 +29,6 @@ public class PascalSpecialSymbolToken extends PascalToken{
             case '=':
             case '(':
             case ')':
-
             case '[':
             case ']':
             case '{':
@@ -66,13 +65,23 @@ public class PascalSpecialSymbolToken extends PascalToken{
             case '>': {
                 currentChar =nextChar();
 
-                if(currentChar == '.') {
+                if(currentChar == '=') {
                     text += currentChar;
                     nextChar();
                 }
                 break;
             }
 
+            case '.': {
+                currentChar = nextChar();  // consume '.';
+
+                if (currentChar == '.') {
+                    text += currentChar;
+                    nextChar();  // consume '.'
+                }
+
+                break;
+            }
             default: {
                 nextChar();
                 type = ERROR;
