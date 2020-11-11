@@ -1,5 +1,6 @@
 import backend.Backend;
 import backend.BackendFactory;
+import backend.interpreter.RuntimeErrorCode;
 import frontend.FrontendFactory;
 import frontend.Parser;
 import frontend.Source;
@@ -26,9 +27,9 @@ public class Pascal {
     private Backend backend;
 
     public Pascal(String operation, String filePath, String flags) {
-        try{
+        try {
             boolean intermediate = flags.contains("i");
-            boolean xref         = flags.contains("x");
+            boolean xref = flags.contains("x");
 
             source = new Source(new BufferedReader(new FileReader(filePath)));
             source.addMessageListener(new SourceMessageListener());
@@ -45,19 +46,19 @@ public class Pascal {
             iCode = parser.getICode();
             symbolTableStack = parser.getSymbolTableStack();
 
-            if(xref) {
+            if (xref) {
                 CrossReferencer crossReferencer = new CrossReferencer();
                 crossReferencer.print(symbolTableStack);
             }
 
-            if(intermediate) {
+            if (intermediate) {
                 ParseTreePrinter treePrinter =
                         new ParseTreePrinter(System.out);
                 treePrinter.print(iCode);
             }
 
             backend.process(iCode, symbolTableStack);
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Internal Translator Error");
             e.printStackTrace();
         }
@@ -67,10 +68,10 @@ public class Pascal {
     private static final String USAGE = "Usage: Pascal execute|compile " + FLAGS + " <source file path>";
 
     public static void main(String[] args) {
-        try{
+        try {
             String operation = args[0];
 
-            if (!(   operation.equalsIgnoreCase("compile") || operation.equalsIgnoreCase("execute"))) {
+            if (!(operation.equalsIgnoreCase("compile") || operation.equalsIgnoreCase("execute"))) {
                 throw new Exception();
             }
 
@@ -87,8 +88,7 @@ public class Pascal {
             } else {
                 throw new Exception();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(USAGE);
         }
     }
@@ -108,7 +108,7 @@ public class Pascal {
             switch (type) {
                 case SOURCE_LINE: {
                     int lineNumber = (Integer) body[0];
-                    String lineText = (String) body[1];
+                    Integer lineText = (Integer) body[1];
 
                     System.out.println(String.format(SOURCE_LINE_FORMAT, lineNumber, lineText));
 
@@ -118,8 +118,8 @@ public class Pascal {
         }
     }
 
-    private static final String TOKEN_FORMAT =        ">>> %-15s line=%03d, pos=%2d, text=\"%s\"";
-    private static final String VALUE_FORMAT =        ">>>                 value=%s";
+    private static final String TOKEN_FORMAT = ">>> %-15s line=%03d, pos=%2d, text=\"%s\"";
+    private static final String VALUE_FORMAT = ">>>                 value=%s";
     private static final int PREFIX_WIDTH = 5;
 
     private static class ParserMessageListener implements MessageListener {
@@ -143,13 +143,13 @@ public class Pascal {
                     Object tokenValue = body[4];
 
                     System.out.printf((TOKEN_FORMAT) + "%n",
-                                                     tokenType,
-                                                     line,
-                                                     position,
-                                                     tokenText);
+                            tokenType,
+                            line,
+                            position,
+                            tokenText);
 
-                    if(tokenValue != null) {
-                        if(tokenType == STRING) {
+                    if (tokenValue != null) {
+                        if (tokenType == STRING) {
                             tokenValue = "\"" + tokenValue + "\"";
                         }
 
@@ -168,13 +168,13 @@ public class Pascal {
                     int spaceCount = PREFIX_WIDTH + position;
                     StringBuffer flagBuilder = new StringBuffer();
 
-                    for(int i = 0 ; i < spaceCount ; i++) {
+                    for (int i = 0; i < spaceCount; i++) {
                         flagBuilder.append(" ");
                     }
 
                     flagBuilder.append("^\n*** ").append(errorMessage);
 
-                    if(tokenText != null) {
+                    if (tokenText != null) {
                         flagBuilder.append(" [at \"").append(tokenText).append("\"]");
                     }
 
@@ -205,13 +205,13 @@ public class Pascal {
                 "\n%,20d statements executed." +
                         "\n%,20.2f seconds total code generation time.\n";
 
+        private static final String ASSIGN_FORMAT = " >>> LINE %03d: %s = %s\n";
 
         @Override
         public void messageReceived(Message message) {
             MessageType type = message.getType();
 
             switch (type) {
-
                 case INTERPRETER_SUMMARY: {
                     Number body[] = (Number[]) message.getBody();
 
@@ -230,6 +230,25 @@ public class Pascal {
                     float elapsedTime = (float) body[1];
                     System.out.printf(COMPILER_SUMMARY_FORMAT, instructionCount, elapsedTime);
 
+                    break;
+                }
+                case ASSIGN: {
+                    Object body[] = (Object[]) message.getBody();
+                    int lineNumber = (Integer) body[0];
+                    String variableName = (String) body[1];
+                    Object value = body[2];
+                    System.out.printf(ASSIGN_FORMAT, lineNumber, variableName, value);
+                    break;
+                }
+                case RUNTIME_ERROR: {
+                    Object body[] = (Object[]) message.getBody();
+                    RuntimeErrorCode errorMessage = (RuntimeErrorCode) body[0];
+                    Integer lineNumber = (Integer) body[1];
+                    System.out.print("*** RUNTIME ERROR");
+                    if (lineNumber != null) {
+                        System.out.print(" AT LINE " + String.format("%03d", lineNumber));
+                    }
+                    System.out.println(": " + errorMessage);
                     break;
                 }
 

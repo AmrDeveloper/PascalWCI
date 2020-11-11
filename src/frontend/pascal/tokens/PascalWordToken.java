@@ -19,7 +19,7 @@ public class PascalWordToken extends PascalToken {
 
         while (Character.isLetterOrDigit(currentChar)) {
             textBuffer.append(currentChar);
-            currentChar = currentChar();
+            currentChar = nextChar();
         }
 
         text = textBuffer.toString();

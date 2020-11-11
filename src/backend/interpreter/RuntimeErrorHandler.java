@@ -30,4 +30,7 @@ public class RuntimeErrorHandler {
         }
     }
 
+    public int getErrorCounter() {
+        return errorCounter;
+    }
 }

@@ -51,7 +51,7 @@ public class PascalParserTD extends Parser {
                 errorHandler.flag(token, MISSING_PERIOD, this);
             }
 
-            token = currentToken();
+            System.out.println(token.getType());
 
             if(rootNode != null) {
                 iCode.setRoot(rootNode);

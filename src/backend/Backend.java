@@ -1,7 +1,6 @@
 package backend;
 
 import intermediate.ICode;
-import intermediate.SymbolTable;
 import intermediate.SymbolTableStack;
 import message.Message;
 import message.MessageHandler;
@@ -16,7 +15,7 @@ public abstract class Backend implements MessageProducer {
         messageHandler = new MessageHandler();
     }
 
-    protected SymbolTable symbolTable;
+    protected SymbolTableStack symbolTable;
     protected ICode iCode;
 
     @Override

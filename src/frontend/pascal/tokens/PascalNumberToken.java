@@ -4,9 +4,10 @@ import frontend.Source;
 
 import static frontend.pascal.PascalErrorCode.*;
 import static frontend.pascal.PascalTokenType.*;
-import static java.lang.Double.MAX_EXPONENT;
 
-public class PascalNumberToken extends PascalToken{
+public class PascalNumberToken extends PascalToken {
+
+    private static final int MAX_EXPONENT = 37;
 
     public PascalNumberToken(Source source) throws Exception {
         super(source);
@@ -19,7 +20,7 @@ public class PascalNumberToken extends PascalToken{
         text = textBuffer.toString();
     }
 
-    protected void extractNumber(StringBuilder textBuffer) throws Exception{
+    protected void extractNumber(StringBuilder textBuffer) throws Exception {
         String wholeDigits = null;          //digits before the decimal point
         String fractionDigits = null;       //digits after the decimal point
         String exponentDigits = null;       //exponent digits
@@ -30,50 +31,50 @@ public class PascalNumberToken extends PascalToken{
         type = INTEGER;
 
         wholeDigits = unsingedIntegerDigits(textBuffer);
-        if(type == ERROR) {
+        if (type == ERROR) {
             return;
         }
 
         currentChar = currentChar();
-        if(currentChar == '.') {
-            if(peekChar() == '.') {
+        if (currentChar == '.') {
+            if (peekChar() == '.') {
                 sawDotDot = true;
-            }else{
+            } else {
                 type = REAL;
                 textBuffer.append(currentChar);
+                currentChar = nextChar();
 
                 fractionDigits = unsingedIntegerDigits(textBuffer);
-                if(type == ERROR) {
+                if (type == ERROR) {
                     return;
                 }
             }
         }
 
         currentChar = currentChar();
-        if(!sawDotDot && ((currentChar == 'E') || currentChar == 'e')){
+        if (!sawDotDot && ((currentChar == 'E') || currentChar == 'e')) {
             type = REAL;
             textBuffer.append(currentChar);
             currentChar = nextChar();
 
-            if((currentChar == '+') || currentChar == '-') {
+            if ((currentChar == '+') || currentChar == '-') {
                 textBuffer.append(currentChar);
                 exponentSign = currentChar;
                 currentChar = nextChar();
             }
 
-            exponentDigits =  unsingedIntegerDigits(textBuffer);
+            exponentDigits = unsingedIntegerDigits(textBuffer);
         }
 
-        if(type == INTEGER) {
+        if (type == INTEGER) {
             int integerValue = computeIntegerValue(wholeDigits);
 
-            if(type != ERROR) {
+            if (type != ERROR) {
                 value = new Integer(integerValue);
             }
-        }
-        else if(type == REAL) {
+        } else if (type == REAL) {
             float floatValue = computeFloatValue(wholeDigits, fractionDigits, exponentDigits, exponentSign);
-            if(type != ERROR) {
+            if (type != ERROR) {
                 value = new Float(floatValue);
             }
         }
@@ -82,7 +83,7 @@ public class PascalNumberToken extends PascalToken{
     private String unsingedIntegerDigits(StringBuilder textBuffer) throws Exception {
         char currentChar = currentChar();
 
-        if(!Character.isDigit(currentChar)) {
+        if (!Character.isDigit(currentChar)) {
             type = ERROR;
             value = INVALID_NUMBER;
             return null;
@@ -99,7 +100,7 @@ public class PascalNumberToken extends PascalToken{
     }
 
     private int computeIntegerValue(String digits) {
-        if(digits == null) {
+        if (digits == null) {
             return 0;
         }
 
@@ -107,13 +108,13 @@ public class PascalNumberToken extends PascalToken{
         int prevValue = -1;
         int index = 0;
 
-        while((index < digits.length()) && (integerValue >= prevValue)) {
+        while ((index < digits.length()) && (integerValue >= prevValue)) {
             prevValue = integerValue;
             integerValue = 10 * integerValue + Character.getNumericValue(digits.charAt(index++));
         }
 
         //No over flow
-        if(integerValue >= prevValue) {
+        if (integerValue >= prevValue) {
             return integerValue;
         }
         //Overflow: set the integer out or the range error
@@ -124,37 +125,33 @@ public class PascalNumberToken extends PascalToken{
         }
     }
 
-    private float computeFloatValue(String wholeDigits, String fractionDigits,
-                                    String exponentDigits, char exponentSign) {
+    private float computeFloatValue(String wholeDigits, String fractionDigits, String exponentDigits, char exponentSign) {
         double floatValue = 0.0;
         int exponentValue = computeIntegerValue(exponentDigits);
         String digits = wholeDigits;
-
-        if(exponentSign == '-') {
+        if (exponentSign == '-') {
             exponentValue = -exponentValue;
         }
-
-        if(fractionDigits != null) {
+        // If there are any fraction digits, adjust the exponent value
+        // and append the fraction digits.
+        if (fractionDigits != null) {
             exponentValue -= fractionDigits.length();
-            digits  += fractionDigits;
+            digits += fractionDigits;
         }
-
-        // Check for a real number out of range error
-        if(Math.abs(exponentSign + wholeDigits.length()) > MAX_EXPONENT) {
+        // Check for a real number out of range error.
+        if (Math.abs(exponentValue + wholeDigits.length()) > MAX_EXPONENT) {
             type = ERROR;
             value = RANGE_REAL;
             return 0.0f;
-        }
-
+        }        // Loop over the digits to compute the float value.
         int index = 0;
         while (index < digits.length()) {
             floatValue = 10 * floatValue + Character.getNumericValue(digits.charAt(index++));
         }
-
-        if(exponentValue != 0) {
+        // Adjust the float value based on the exponent value.
+        if (exponentValue != 0) {
             floatValue *= Math.pow(10, exponentValue);
         }
-
         return (float) floatValue;
     }
 }
