@@ -97,8 +97,6 @@ public class Pascal {
 
     private static class SourceMessageListener implements MessageListener {
 
-        private static final String SOURCE_LINE_FORMAT = "%03d %s";
-
         @Override
         public void messageReceived(Message message) {
 
