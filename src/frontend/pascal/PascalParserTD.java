@@ -9,6 +9,7 @@ import message.Message;
 import message.MessageType;
 
 import java.io.IOException;
+import java.util.EnumSet;
 
 import static frontend.pascal.PascalErrorCode.*;
 import static frontend.pascal.PascalTokenType.*;
@@ -65,6 +66,19 @@ public class PascalParserTD extends Parser {
             errorHandler.abortTranslation(IO_ERROR, this);
         }
 
+    }
+
+    public Token synchronize(EnumSet syncSet) throws Exception{
+        Token token = currentToken();
+
+        if(!syncSet.contains(token.getType())) {
+            errorHandler.flag(token, UNEXPECTED_TOKEN, this);
+
+            do {
+               token = nextToken();
+            }while (!(token instanceof EofToken) && !syncSet.contains(token.getType()));
+        }
+        return token;
     }
 
     @Override

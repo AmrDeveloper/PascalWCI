@@ -36,6 +36,9 @@ public class ExpressionParser extends PascalParserTD {
     private static final EnumSet<PascalTokenType> MULT_OPS =
             EnumSet.of(STAR, SLASH, DIV, PascalTokenType.MOD, PascalTokenType.AND);
 
+    // Synchronization set for starting an expression.
+    static final EnumSet<PascalTokenType> EXPR_START_SET =  EnumSet.of(PLUS, MINUS, IDENTIFIER, INTEGER, REAL, STRING,                   PascalTokenType.NOT, LEFT_PAREN);
+
     // Map relational operator tokens to node types.
     private static final HashMap<PascalTokenType, ICodeNodeType> REL_OPS_MAP = new HashMap<>();
 
