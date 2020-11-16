@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/PascalLang.iml" filepath="$PROJECT_DIR$/PascalLang.iml" />
+      <module fileurl="file://$PROJECT_DIR$/PascalWCI.iml" filepath="$PROJECT_DIR$/PascalWCI.iml" />
     </modules>
   </component>
 </project>
