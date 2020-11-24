@@ -221,11 +221,16 @@ public class CaseStatementParser extends StatementParser {
     private ICodeNode parseCharacterConstant(Token token, String value, TokenType sign) throws  Exception {
         ICodeNode constantNode = null;
 
-        if(sign != null || value.length() != 1) {
+        if(sign != null) {
             errorHandler.flag(token, INVALID_CONSTANT, this);
-        } else {
-            constantNode = ICodeFactory.createICodeNode(STRING_CONSTANT);
-            constantNode.setAttribute(VALUE, value);
+        }else {
+            if(value.length() == 1) {
+                constantNode = ICodeFactory.createICodeNode(STRING_CONSTANT);
+                constantNode.setAttribute(VALUE, value);
+            }
+            else {
+                errorHandler.flag(token, INVALID_CONSTANT, this);
+            }
         }
         return constantNode;
     }

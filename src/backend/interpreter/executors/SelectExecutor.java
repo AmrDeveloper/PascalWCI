@@ -60,7 +60,7 @@ public class SelectExecutor extends StatementExecutor{
         List<ICodeNode> constantsList = constantsNode.getChildren();
 
         // Search the list of constants
-        if(selectValue instanceof Integer) {
+        if(integerMode) {
             for(ICodeNode constantNode : constantsList) {
                 int constant = (Integer) constantNode.getAttribute(VALUE);
 
