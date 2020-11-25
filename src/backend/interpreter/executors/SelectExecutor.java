@@ -41,7 +41,7 @@ public class SelectExecutor extends StatementExecutor{
     private ICodeNode searchBranches(Object selectValue, List<ICodeNode> selectChildren) {
         // Loop over the SELECT_BRANCH\s to find a match
         for(int i = 1 ; i < selectChildren.size() ; ++i) {
-            ICodeNode branchNode = selectChildren.get(1);
+            ICodeNode branchNode = selectChildren.get(i);
 
             if(searchConstants(selectValue, branchNode)) {
                 return branchNode;
@@ -73,7 +73,7 @@ public class SelectExecutor extends StatementExecutor{
             for(ICodeNode constantNode : constantsList) {
                 String constant = (String) constantNode.getAttribute(VALUE);
 
-                if(((String) selectValue).equals(constant)) {
+                if(selectValue.equals(constant)) {
                     return true;
                 }
             }
