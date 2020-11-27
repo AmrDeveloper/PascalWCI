@@ -17,4 +17,12 @@ public interface SymbolTableEntry {
     public void setAttribute(SymbolTableKey key, Object value);
 
     public Object getAttribute(SymbolTableKey key);
+
+    public void setDefinition(Definition definition);
+
+    public Definition getDefinition();
+
+    public void setTypeSpec(TypeSpec typeSpec);
+
+    public TypeSpec getTypeSpec();
 }

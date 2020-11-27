@@ -1,8 +1,6 @@
 package intermediate.symtabimpl;
 
-import intermediate.SymbolTable;
-import intermediate.SymbolTableEntry;
-import intermediate.SymbolTableKey;
+import intermediate.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +18,12 @@ public class SymbolTableEntryImp
 
     //Source line numbers
     private List<Integer> lineNumbers;
+
+    // how the identifier is defined
+    private Definition definition;
+
+    // type specification
+    private TypeSpec typeSpec;
 
     public SymbolTableEntryImp(String name, SymbolTable symbolTable) {
         this.name = name;
@@ -55,5 +59,25 @@ public class SymbolTableEntryImp
     @Override
     public Object getAttribute(SymbolTableKey key) {
         return get(key);
+    }
+
+    @Override
+    public void setDefinition(Definition definition) {
+         this.definition = definition;
+    }
+
+    @Override
+    public Definition getDefinition() {
+        return definition;
+    }
+
+    @Override
+    public void setTypeSpec(TypeSpec typeSpec) {
+        this.typeSpec = typeSpec;
+    }
+
+    @Override
+    public TypeSpec getTypeSpec() {
+        return typeSpec;
     }
 }

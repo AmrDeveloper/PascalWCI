@@ -15,4 +15,19 @@ public interface SymbolTableStack {
 
     //Loop up an existing symbol table entry throughout the stack
     public SymbolTableEntry lookup(String name);
+
+    // Set the symbol table entry for the main program identifier
+    public void setProgramId(SymbolTableEntry entry);
+
+    // Return the symbol table entry for the main program identifier
+    public SymbolTableEntry getProgramId();
+
+    // Push new SymbolTable onto the stack
+    public SymbolTable push();
+
+    // Push SymbolTable(table) onto the stack
+    public SymbolTable push(SymbolTable table);
+
+    // Pop a SymbolTable off the stack
+    public SymbolTable pop();
 }
