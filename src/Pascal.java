@@ -6,6 +6,7 @@ import frontend.Parser;
 import frontend.Source;
 import frontend.TokenType;
 import intermediate.ICode;
+import intermediate.SymbolTableEntry;
 import intermediate.SymbolTableStack;
 import message.Message;
 import message.MessageListener;
@@ -17,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 
 import static frontend.pascal.PascalTokenType.STRING;
+import static intermediate.symtabimpl.SymbolTableKeyImp.ROUTINE_ICODE;
 
 public class Pascal {
 
@@ -43,21 +45,25 @@ public class Pascal {
             parser.parse();
             source.close();
 
-            iCode = parser.getICode();
-            symbolTableStack = parser.getSymbolTableStack();
+            if(parser.getErrorCount() == 0) {
+                symbolTableStack = parser.getSymbolTableStack();
 
-            if (xref) {
-                CrossReferencer crossReferencer = new CrossReferencer();
-                crossReferencer.print(symbolTableStack);
+                SymbolTableEntry programId = symbolTableStack.getProgramId();
+                iCode = (ICode) programId.getAttribute(ROUTINE_ICODE);
+
+                if (xref) {
+                    CrossReferencer crossReferencer = new CrossReferencer();
+                    crossReferencer.print(symbolTableStack);
+                }
+
+                if (intermediate) {
+                    ParseTreePrinter treePrinter =
+                            new ParseTreePrinter(System.out);
+                    treePrinter.print(iCode);
+                }
+
+                backend.process(iCode, symbolTableStack);
             }
-
-            if (intermediate) {
-                ParseTreePrinter treePrinter =
-                        new ParseTreePrinter(System.out);
-                treePrinter.print(iCode);
-            }
-
-            backend.process(iCode, symbolTableStack);
         } catch (Exception e) {
             System.out.println("Internal Translator Error");
             e.printStackTrace();

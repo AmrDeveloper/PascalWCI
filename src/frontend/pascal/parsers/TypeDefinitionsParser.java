@@ -79,7 +79,7 @@ public class TypeDefinitionsParser extends PascalParserTD {
             TypeSpecificationParser typeSpecificationParser = new TypeSpecificationParser(this);
             TypeSpec type = typeSpecificationParser.parse(token);
 
-            // Set identifier to be a type and set its type specificationt.
+            // Set identifier to be a type and set its type specification.
             if (typeId != null) {
                 typeId.setDefinition(DefinitionImpl.TYPE);
             }

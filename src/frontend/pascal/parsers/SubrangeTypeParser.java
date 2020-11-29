@@ -66,7 +66,7 @@ public class SubrangeTypeParser extends PascalParserTD {
                     ? constantParser.getConstantType(constantToken)
                     : constantParser.getConstantType(maxValue);
 
-            minValue = checkValueType(constantToken, maxValue, maxType);
+            maxValue = checkValueType(constantToken, maxValue, maxType);
 
             // Are the min and max value types valid
             if ((minType == null) || (maxType == null)) {
