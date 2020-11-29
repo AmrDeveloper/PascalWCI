@@ -1,16 +1,13 @@
 package util;
 
-import intermediate.ICode;
-import intermediate.ICodeKey;
-import intermediate.ICodeNode;
-import intermediate.SymbolTableEntry;
+import intermediate.*;
 import intermediate.icodeimpl.ICodeNodeImpl;
 
 import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static intermediate.symtabimpl.SymbolTableKeyImp.ROUTINE_ICODE;
+import static intermediate.symtabimpl.SymbolTableKeyImp.ROUTINE_ROUTINES;
 
 public class ParseTreePrinter {
 
@@ -35,11 +32,30 @@ public class ParseTreePrinter {
         }
     }
 
-    public void print(ICode iCode) {
+    public void print(SymbolTableStack symTabStack) {
         printStream.println("\n===== INTERMEDIATE CODE =====\n");
 
-        printNode((ICodeNodeImpl) iCode.getRoot());
-        printLine();
+        SymbolTableEntry programId = symTabStack.getProgramId();
+        printRoutine(programId);
+    }
+
+    private void printRoutine(SymbolTableEntry routineId) {
+        Definition definition = routineId.getDefinition();
+        System.out.println("\n*** " + definition.toString() + " " + routineId.getName() + " ***\n");
+
+        // Print the intermediate code in the routine&apos;s symbol table entry.
+        ICode iCode = (ICode) routineId.getAttribute(ROUTINE_ICODE);
+        if (iCode.getRoot() != null) {
+            printNode((ICodeNodeImpl) iCode.getRoot());
+        }
+
+        // Print any procedures and functions defined in the routine.
+        List<SymbolTableEntry> routineIds = (ArrayList<SymbolTableEntry>) routineId.getAttribute(ROUTINE_ROUTINES);
+        if (routineIds != null) {
+            for (SymbolTableEntry rtnId : routineIds) {
+                printRoutine(rtnId);
+            }
+        }
     }
 
     private void printNode(ICodeNodeImpl node) {
@@ -50,15 +66,14 @@ public class ParseTreePrinter {
         printTypeSpec(node);
 
         List<ICodeNode> childNodes = node.getChildren();
-        if((childNodes != null) && (childNodes.size() > 0)) {
+        if ((childNodes != null) && (childNodes.size() > 0)) {
             append(">");
             printLine();
 
             printChildNodes(childNodes);
             append(indentation);
             append("</" + node.toString() + ">");
-        }
-        else {
+        } else {
             append(" ");
             append("/>");
         }
@@ -87,7 +102,7 @@ public class ParseTreePrinter {
         append(" ");
         append(text);
 
-        if(isSymbolTableEntry) {
+        if (isSymbolTableEntry) {
             int level = ((SymbolTableEntry) value).getSymbolTable().getNestingLevel();
             printAttribute("LEVEL", level);
         }
@@ -97,27 +112,28 @@ public class ParseTreePrinter {
         String saveIndentation = indentation;
         indentation += indent;
 
-        for(ICodeNode child : childNodes) {
+        for (ICodeNode child : childNodes) {
             printNode((ICodeNodeImpl) child);
         }
 
         indentation = saveIndentation;
     }
 
-    private void printTypeSpec(ICodeNodeImpl node) {}
+    private void printTypeSpec(ICodeNodeImpl node) {
+    }
 
     private void append(String text) {
         int textLength = text.length();
         boolean lineBreak = false;
 
-        if((length + textLength) > LINE_WIDTH) {
+        if ((length + textLength) > LINE_WIDTH) {
             printLine();
             line.append(indentation);
             length = indentation.length();
             lineBreak = true;
         }
 
-        if(!(lineBreak && " ".equals(text))) {
+        if (!(lineBreak && " ".equals(text))) {
             line.append(text);
             length += textLength;
         }
