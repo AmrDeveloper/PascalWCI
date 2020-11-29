@@ -3,6 +3,7 @@ package frontend.pascal.parsers;
 import frontend.Token;
 import frontend.pascal.PascalParserTD;
 import frontend.pascal.PascalTokenType;
+import intermediate.symtabimpl.DefinitionImpl;
 
 import java.util.EnumSet;
 
@@ -61,7 +62,7 @@ public class DeclarationsParser extends PascalParserTD {
             token = nextToken();
 
             VariableDeclarationsParser variableDeclarationsParser = new VariableDeclarationsParser(this);
-            variableDeclarationsParser.setDefinition(VARIABLE);
+            variableDeclarationsParser.setDefinition(DefinitionImpl.VARIABLE);
             variableDeclarationsParser.parse(token);
         }
 
