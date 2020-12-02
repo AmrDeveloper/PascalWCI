@@ -4,16 +4,20 @@ import frontend.Token;
 import frontend.TokenType;
 import frontend.pascal.PascalParserTD;
 import frontend.pascal.PascalTokenType;
+import intermediate.ICode;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
+import intermediate.TypeSpec;
+import intermediate.symtabimpl.Predefined;
+import intermediate.typeimpl.TypeChecker;
 
 import java.util.EnumSet;
 
-import static frontend.pascal.PascalErrorCode.MISSING_DO;
-import static frontend.pascal.PascalErrorCode.MISSING_TO_DOWNTO;
+import static frontend.pascal.PascalErrorCode.*;
 import static frontend.pascal.PascalTokenType.*;
 import static intermediate.icodeimpl.ICodeKeyImpl.VALUE;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.*;
+import static intermediate.typeimpl.TypeFormImpl.ENUMERATION;
 
 public class ForStatementParser extends StatementParser {
 
@@ -51,6 +55,15 @@ public class ForStatementParser extends StatementParser {
         // Parse the embedded initial assignment
         AssignmentStatementParser assignmentParser = new AssignmentStatementParser(this);
         ICodeNode initAssignNode = assignmentParser.parse(token);
+        TypeSpec controlType = (initAssignNode != null)
+                ? initAssignNode.getTypeSpec()
+                : Predefined.undefinedType;
+
+        // Type check: The control variable&apos;s type must be integer or enumeration
+        if(!TypeChecker.isInteger(controlType) && (controlType.getForm() != ENUMERATION))
+        {
+            errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+        }
 
         // Set the current line number attribute
         setLineNumber(initAssignNode, targetToken);
@@ -75,6 +88,7 @@ public class ForStatementParser extends StatementParser {
 
         // Create a relational operator node: GT for TO, or LT for DOWNTO.
         ICodeNode relOpNode = ICodeFactory.createICodeNode(direction == TO ? GT : LT);
+        relOpNode.setTypeSpec(Predefined.booleanType);
 
         // Copy the control VARIABLE node. The relational operator
         // node adopts the copied VARIABLE node as it's first child.
@@ -84,7 +98,16 @@ public class ForStatementParser extends StatementParser {
         // Parse the termination expression. The relational operator node
         // adopts the expression as its second child.
         ExpressionParser expressionParser = new ExpressionParser(this);
-        relOpNode.addChild(expressionParser.parse(token));
+        ICodeNode exprNode = expressionParser.parse(token);
+        relOpNode.addChild(exprNode);
+
+        TypeSpec exprType = (exprNode != null)
+                ? exprNode.getTypeSpec()
+                : Predefined.undefinedType;
+
+        if(!TypeChecker.areAssignmentCompatible(controlType, exprType)) {
+            errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+        }
 
         // The TEST node adopts the relational operator node as its only child.
         // The LOOP node adopts the TEST node as its first child.

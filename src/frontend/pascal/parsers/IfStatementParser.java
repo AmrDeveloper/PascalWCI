@@ -5,9 +5,13 @@ import frontend.pascal.PascalParserTD;
 import frontend.pascal.PascalTokenType;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
+import intermediate.TypeSpec;
+import intermediate.symtabimpl.Predefined;
+import intermediate.typeimpl.TypeChecker;
 
 import java.util.EnumSet;
 
+import static frontend.pascal.PascalErrorCode.INCOMPATIBLE_TYPES;
 import static frontend.pascal.PascalErrorCode.MISSING_THEN;
 import static frontend.pascal.PascalTokenType.ELSE;
 import static frontend.pascal.PascalTokenType.THEN;
@@ -37,7 +41,17 @@ public class IfStatementParser extends StatementParser {
         // Parse the expression
         // The IF node adopts the expression subtree as its first child.
         ExpressionParser expressionParser = new ExpressionParser(this);
-        ifNote.addChild(expressionParser.parse(token));
+        ICodeNode exprNode = expressionParser.parse(token);
+        ifNote.addChild(exprNode);
+
+        // Type check: the expression type must be boolean
+        TypeSpec exprType = (exprNode != null)
+                ? exprNode.getTypeSpec()
+                : Predefined.undefinedType;
+
+        if(!TypeChecker.isBoolean(exprType)) {
+            errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+        }
 
         // Synchronize at the THEN
         token = synchronize(THEN_SET);

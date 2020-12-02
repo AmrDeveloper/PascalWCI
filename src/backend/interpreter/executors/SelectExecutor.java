@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static intermediate.icodeimpl.ICodeKeyImpl.VALUE;
+import static intermediate.icodeimpl.ICodeNodeTypeImpl.STRING_CONSTANT;
 
 public class SelectExecutor extends StatementExecutor {
 
@@ -64,7 +65,11 @@ public class SelectExecutor extends StatementExecutor {
             List<ICodeNode> constantsList = constantsNode.getChildren();
             for(ICodeNode constantNode : constantsList) {
                 // Create a jump table entry
+                // Convert a single-character string constant to a character.
                 Object value = constantNode.getAttribute(VALUE);
+                if(constantNode.getType() == STRING_CONSTANT) {
+                    value = ((String) value).charAt(0);
+                }
                 jumpTable.put(value, statementNode);
             }
         }

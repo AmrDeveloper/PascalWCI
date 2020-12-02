@@ -5,7 +5,11 @@ import frontend.Token;
 import frontend.pascal.PascalParserTD;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
+import intermediate.TypeSpec;
+import intermediate.symtabimpl.Predefined;
+import intermediate.typeimpl.TypeChecker;
 
+import static frontend.pascal.PascalErrorCode.INCOMPATIBLE_TYPES;
 import static frontend.pascal.PascalErrorCode.MISSING_UNTIL;
 import static frontend.pascal.PascalTokenType.UNTIL;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.LOOP;
@@ -35,8 +39,18 @@ public class RepeatStatementParser extends StatementParser {
         // The TEST node adopts the expression subtree as its only child.
         // The LOOP node adopts the TEST node.
         ExpressionParser expressionParser = new ExpressionParser(this);
-        testNode.addChild(expressionParser.parse(token));
+        ICodeNode exprNode = expressionParser.parse(token);
+        testNode.addChild(exprNode);
         loopNode.addChild(testNode);
+
+        // Type Check: the test expression must be boolean
+        TypeSpec exprType = (exprNode != null)
+                ? exprNode.getTypeSpec()
+                : Predefined.undefinedType;
+
+        if(!TypeChecker.isBoolean(exprType)) {
+            errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+        }
 
         return loopNode;
     }
