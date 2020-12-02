@@ -1,9 +1,6 @@
 package intermediate.icodeimpl;
 
-import intermediate.ICodeFactory;
-import intermediate.ICodeKey;
-import intermediate.ICodeNode;
-import intermediate.ICodeNodeType;
+import intermediate.*;
 
 import java.util.*;
 
@@ -12,6 +9,7 @@ public class ICodeNodeImpl
         implements ICodeNode {
 
     private ICodeNodeType type;
+    private TypeSpec typeSpec;
     private ICodeNode parent;
     private List<ICodeNode> children;
 
@@ -53,6 +51,16 @@ public class ICodeNodeImpl
     @Override
     public Object getAttribute(ICodeKey key) {
         return get(key);
+    }
+
+    @Override
+    public void setTypeSpec(TypeSpec typeSpec) {
+        this.typeSpec = typeSpec;
+    }
+
+    @Override
+    public TypeSpec getTypeSpec() {
+        return typeSpec;
     }
 
     @Override
