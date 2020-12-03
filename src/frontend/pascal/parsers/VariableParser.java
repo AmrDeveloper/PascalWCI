@@ -21,6 +21,10 @@ import static intermediate.typeimpl.TypeKeyImpl.*;
 
 public class VariableParser extends PascalParserTD {
 
+    // Set to true to parse a function name
+    // as the target of an assignment.
+    private boolean isFunctionTarget = false;
+
     // Synchronization set to start a subscript or a field.
     private static final EnumSet<PascalTokenType> SUBSCRIPT_FIELD_START_SET = EnumSet.of(LEFT_BRACKET, DOT);
 
@@ -67,21 +71,28 @@ public class VariableParser extends PascalParserTD {
 
         // Parse array subscript or record fields
         TypeSpec variableType = variableId.getTypeSpec();
-        while (SUBSCRIPT_FIELD_START_SET.contains(token.getType())) {
-            ICodeNode subFldNode = token.getType() == LEFT_BRACKET
-                    ? parseSubscripts(variableType)
-                    : parseField(variableType);
+        if(!isFunctionTarget) {
+            // Parse array subscripts or record fields.
+            while (SUBSCRIPT_FIELD_START_SET.contains(token.getType())) {
+                ICodeNode subFldNode = token.getType() == LEFT_BRACKET
+                        ? parseSubscripts(variableType)
+                        : parseField(variableType);
 
-            token = currentToken();
+                token = currentToken();
 
-            // Update the variable&apos;s type.
-            // The variable node adopts the SUBSCRIPTS or FIELD node
-            variableType = subFldNode.getTypeSpec();
-            variableNode.addChild(subFldNode);
+                // Update the variable&apos;s type.
+                // The variable node adopts the SUBSCRIPTS or FIELD node
+                variableType = subFldNode.getTypeSpec();
+                variableNode.addChild(subFldNode);
+            }
         }
-
         variableNode.setTypeSpec(variableType);
         return variableNode;
+    }
+
+    public ICodeNode parseFunctionNameTarget(Token token) throws Exception {
+        isFunctionTarget = true;
+        return parse(token);
     }
 
     private ICodeNode parseSubscripts(TypeSpec variableType) throws Exception {
@@ -128,11 +139,10 @@ public class VariableParser extends PascalParserTD {
         // Synchronize at the ] token.
         token = synchronize(RIGHT_BRACKET_SET);
 
-        if(token.getType() == RIGHT_BRACKET) {
+        if (token.getType() == RIGHT_BRACKET) {
             // consume the ]
             token = nextToken();
-        }
-        else {
+        } else {
             errorHandler.flag(token, MISSING_RIGHT_BRACKET, this);
         }
         subscriptsNode.setTypeSpec(variableType);
@@ -148,23 +158,21 @@ public class VariableParser extends PascalParserTD {
         TokenType tokenType = token.getType();
         TypeForm variableForm = variableType.getForm();
 
-        if((tokenType == IDENTIFIER) && (variableForm == TypeFormImpl.RECORD)) {
+        if ((tokenType == IDENTIFIER) && (variableForm == TypeFormImpl.RECORD)) {
             SymbolTable symbolTable = (SymbolTable) variableType.getAttribute(RECORD_SYMTAB);
             String fieldName = token.getText().toLowerCase();
             SymbolTableEntry fieldId = symbolTable.lookup(fieldName);
 
-            if(fieldId != null) {
+            if (fieldId != null) {
                 variableType = fieldId.getTypeSpec();
                 fieldId.appendLineNumber(token.getLineNumber());
 
                 // set the field identifier's name
                 fieldNode.setAttribute(ID, fieldId);
-            }
-            else{
+            } else {
                 errorHandler.flag(token, INVALID_FIELD, this);
             }
-        }
-        else {
+        } else {
             errorHandler.flag(token, INVALID_FIELD, this);
         }
 

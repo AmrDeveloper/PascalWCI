@@ -20,6 +20,10 @@ import static intermediate.icodeimpl.ICodeNodeTypeImpl.VARIABLE;
 
 public class AssignmentStatementParser extends PascalParserTD {
 
+    // Set to true to parse a function name
+    // as the target of an assignment.
+    private boolean isFunctionTarget = false;
+
     // Synchronization set for the := token.
     private static final EnumSet<PascalTokenType> COLON_EQUALS_SET =
             ExpressionParser.EXPR_START_SET.clone();
@@ -39,9 +43,12 @@ public class AssignmentStatementParser extends PascalParserTD {
 
         // Parse the target variable
         VariableParser variableParser = new VariableParser(this);
-        ICodeNode targetNode = variableParser.parse(token);
+        ICodeNode targetNode = isFunctionTarget
+                ? variableParser.parseFunctionNameTarget(token)
+                : variableParser.parse(token);
+
         TypeSpec targetType = (targetNode != null)
-                ?  targetNode.getTypeSpec()
+                ? targetNode.getTypeSpec()
                 : Predefined.undefinedType;
 
         // The ASSIGN node adopts the variable node as its first child
@@ -74,5 +81,10 @@ public class AssignmentStatementParser extends PascalParserTD {
 
         assignNode.setTypeSpec(targetType);
         return assignNode;
+    }
+
+    public ICodeNode parseFunctionNameAssignment(Token token) throws Exception {
+        isFunctionTarget = true;
+        return parse(token);
     }
 }

@@ -64,7 +64,7 @@ public class VariableDeclarationsParser extends PascalParserTD {
         // separated by semicolons.
         while (token.getType() == IDENTIFIER) {
             // Parse the identifier sublist and its type specification.
-            parseIdentifierSublist(token);
+            parseIdentifierSublist(token, IDENTIFIER_FOLLOW_SET, COMMA_SET);
 
             token = currentToken();
             TokenType tokenType = token.getType();
@@ -86,7 +86,9 @@ public class VariableDeclarationsParser extends PascalParserTD {
         }
     }
 
-    protected List<SymbolTableEntry> parseIdentifierSublist(Token token) throws Exception {
+    protected List<SymbolTableEntry> parseIdentifierSublist(Token token,
+                                                            EnumSet<PascalTokenType> followSet,
+                                                            EnumSet<PascalTokenType> commaSet) throws Exception {
         List<SymbolTableEntry> subList = new ArrayList<>();
 
         do {
@@ -95,7 +97,7 @@ public class VariableDeclarationsParser extends PascalParserTD {
 
             if (id != null) subList.add(id);
 
-            token = synchronize(COMMA_SET);
+            token = synchronize(commaSet);
             TokenType tokenType = token.getType();
 
             // Look for the comma.
@@ -103,13 +105,13 @@ public class VariableDeclarationsParser extends PascalParserTD {
                 // consume the comma
                 token = nextToken();
 
-                if (IDENTIFIER_FOLLOW_SET.contains(token.getType())) {
+                if (followSet.contains(token.getType())) {
                     errorHandler.flag(token, MISSING_IDENTIFIER, this);
                 }
             }else if(IDENTIFIER_START_SET.contains(tokenType)) {
                 errorHandler.flag(token, MISSING_COMMA, this);
             }
-        }while (!IDENTIFIER_FOLLOW_SET.contains(token.getType()));
+        }while (!followSet.contains(token.getType()));
 
         // Parse the type specification
         TypeSpec type = parseTypeSpec(token);

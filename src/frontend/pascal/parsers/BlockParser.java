@@ -19,12 +19,12 @@ public class BlockParser extends PascalParserTD {
         super(parent);
     }
 
-    public ICodeNode parse(Token token, SymbolTableEntry entry) throws Exception {
+    public ICodeNode parse(Token token, SymbolTableEntry routineId) throws Exception {
         DeclarationsParser declarationParser = new DeclarationsParser(this);
         StatementParser statementParser = new StatementParser(this);
 
         // Parse any declarations.
-        declarationParser.parse(token);
+        declarationParser.parse(token, routineId);
 
         token = synchronize(StatementParser.STMT_START_SET);
         TokenType tokenType = token.getType();

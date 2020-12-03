@@ -6,15 +6,20 @@ import frontend.TokenType;
 import frontend.pascal.PascalErrorCode;
 import frontend.pascal.PascalParserTD;
 import frontend.pascal.PascalTokenType;
+import intermediate.Definition;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
+import intermediate.SymbolTableEntry;
+import intermediate.symtabimpl.DefinitionImpl;
 
 import java.util.EnumSet;
 
 import static frontend.pascal.PascalErrorCode.MISSING_SEMICOLON;
+import static frontend.pascal.PascalErrorCode.UNEXPECTED_TOKEN;
 import static frontend.pascal.PascalTokenType.*;
 import static intermediate.icodeimpl.ICodeKeyImpl.LINE;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.NO_OP;
+import static intermediate.symtabimpl.DefinitionImpl.UNDEFINED;
 
 public class StatementParser extends PascalParserTD {
 
@@ -31,7 +36,7 @@ public class StatementParser extends PascalParserTD {
     }
 
     public ICodeNode parse(Token token) throws Exception {
-        ICodeNode statementNode;
+        ICodeNode statementNode = null;
 
         switch ((PascalTokenType) token.getType()) {
             case BEGIN: {
@@ -40,8 +45,38 @@ public class StatementParser extends PascalParserTD {
                 break;
             }
             case IDENTIFIER: {
-                AssignmentStatementParser assignmentParser = new AssignmentStatementParser(this);
-                statementNode = assignmentParser.parse(token);
+                String name = token.getText().toLowerCase();
+                SymbolTableEntry id = symbolTableStack.lookup(name);
+                Definition idDefinition = id != null
+                        ? id.getDefinition()
+                        : UNDEFINED;
+
+                // Assignment statement or procedure call
+                switch ((DefinitionImpl) idDefinition) {
+                    case VARIABLE:
+                    case VALUE_PARM:
+                    case VAR_PARM:
+                    case UNDEFINED: {
+                        AssignmentStatementParser assignmentParser = new AssignmentStatementParser(this);
+                        statementNode = assignmentParser.parse(token);
+                        break;
+                    }
+                    case FUNCTION: {
+                        AssignmentStatementParser assignmentParser = new AssignmentStatementParser(this);
+                        statementNode = assignmentParser.parseFunctionNameAssignment(token);
+                        break;
+                    }
+                    case PROCEDURE: {
+                        CallParser callParser = new CallParser(this);
+                        statementNode = callParser.parse(token);
+                        break;
+                    }
+                    default: {
+                        errorHandler.flag(token, UNEXPECTED_TOKEN, this);
+                        // consume identifier
+                        token = nextToken();
+                    }
+                }
                 break;
             }
             case REPEAT: {

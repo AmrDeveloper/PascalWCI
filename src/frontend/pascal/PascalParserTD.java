@@ -2,6 +2,7 @@ package frontend.pascal;
 
 import frontend.*;
 import frontend.pascal.parsers.BlockParser;
+import frontend.pascal.parsers.ProgramParser;
 import frontend.pascal.parsers.StatementParser;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
@@ -44,32 +45,11 @@ public class PascalParserTD extends Parser {
         iCode = ICodeFactory.createICode();
         Predefined.initialize(symbolTableStack);
 
-        //Create a dummy program identifier symbol table entry
-        routineId = symbolTableStack.enterLocal("DummyProgramName".toLowerCase());
-        routineId.setDefinition(DefinitionImpl.PROGRAM);
-        symbolTableStack.setProgramId(routineId);
-
-        // Push a new symbol table onto the symbol table stack
-        // Set the routine's symbol table and intermediate code
-        routineId.setAttribute(ROUTINE_SYMTAB, symbolTableStack.push());
-        routineId.setAttribute(ROUTINE_ICODE, iCode);
-
-        BlockParser blockParser = new BlockParser(this);
-
         try {
             Token token = nextToken();
 
-            // Parser a block
-            ICodeNode rootNode = blockParser.parse(token, routineId);
-            iCode.setRoot(rootNode);
-            symbolTableStack.pop();
-
-            // Look for the final period
-            token = currentToken();
-            if(token.getType() != DOT) {
-                errorHandler.flag(token, MISSING_PERIOD, this);
-            }
-
+            ProgramParser programParser = new ProgramParser(this);
+            programParser.parse(token, null);
             token = currentToken();
 
             float elapsedTime = (System.currentTimeMillis() - startTime) / 1000f;
