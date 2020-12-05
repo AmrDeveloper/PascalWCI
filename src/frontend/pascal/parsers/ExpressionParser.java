@@ -21,7 +21,7 @@ import static intermediate.icodeimpl.ICodeNodeTypeImpl.NOT;
 import static intermediate.symtabimpl.DefinitionImpl.UNDEFINED;
 import static intermediate.symtabimpl.SymbolTableKeyImp.CONSTANT_VALUE;
 
-public class ExpressionParser extends PascalParserTD {
+public class ExpressionParser extends StatementParser {
 
     // Set of relational operators.
     private static final EnumSet<PascalTokenType> REL_OPS =
@@ -37,7 +37,9 @@ public class ExpressionParser extends PascalParserTD {
             EnumSet.of(STAR, SLASH, DIV, PascalTokenType.MOD, PascalTokenType.AND);
 
     // Synchronization set for starting an expression.
-    static final EnumSet<PascalTokenType> EXPR_START_SET = EnumSet.of(PLUS, MINUS, IDENTIFIER, INTEGER, REAL, STRING, PascalTokenType.NOT, LEFT_PAREN);
+    static final EnumSet<PascalTokenType> EXPR_START_SET =
+            EnumSet.of(PLUS, MINUS, IDENTIFIER, INTEGER, REAL, STRING,
+                    PascalTokenType.NOT, LEFT_PAREN);
 
     // Map relational operator tokens to node types.
     private static final HashMap<PascalTokenType, ICodeNodeType> REL_OPS_MAP = new HashMap<>();
@@ -136,7 +138,7 @@ public class ExpressionParser extends PascalParserTD {
 
         // Parse a term and make the root of its tree the root node.
         ICodeNode rootNode = parseTerm(token);
-        TypeSpec resultType = (rootNode != null)
+        TypeSpec resultType = rootNode != null
                 ? rootNode.getTypeSpec()
                 : Predefined.undefinedType;
 
@@ -158,7 +160,7 @@ public class ExpressionParser extends PascalParserTD {
         while (ADD_OPS.contains(tokenType)) {
             TokenType operator = tokenType;
 
-            ICodeNodeType nodeType = ADD_OPS_OPS_MAP.get(tokenType);
+            ICodeNodeType nodeType = ADD_OPS_OPS_MAP.get(operator);
             ICodeNode opNode = ICodeFactory.createICodeNode(nodeType);
             opNode.addChild(rootNode);
 
@@ -186,6 +188,9 @@ public class ExpressionParser extends PascalParserTD {
                     else if (TypeChecker.isAtLeastOneReal(resultType, termType)) {
                         resultType = Predefined.realType;
                     }
+                    else {
+                        errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+                    }
 
                     break;
                 }
@@ -204,30 +209,32 @@ public class ExpressionParser extends PascalParserTD {
             token = currentToken();
             tokenType = token.getType();
         }
+
         return rootNode;
     }
 
     private ICodeNode parseTerm(Token token) throws Exception {
         ICodeNode rootNode = parseFactor(token);
 
-        token = currentToken();
-        TokenType tokenType = token.getType();
-
         TypeSpec resultType = (rootNode != null)
                 ? rootNode.getTypeSpec()
                 : Predefined.undefinedType;
 
+        token = currentToken();
+        TokenType tokenType = token.getType();
+
         while (MULT_OPS.contains(tokenType)) {
             TokenType operator = tokenType;
 
-            ICodeNodeType nodeType = MULT_OPS_OPS_MAP.get(tokenType);
+            ICodeNodeType nodeType = MULT_OPS_OPS_MAP.get(operator);
             ICodeNode opNode = ICodeFactory.createICodeNode(nodeType);
             opNode.addChild(rootNode);
 
+            // consume the operator
             token = nextToken();
 
             ICodeNode factorNode = parseFactor(token);
-            opNode.addChild(parseFactor(token));
+            opNode.addChild(factorNode);
 
             TypeSpec factorType = (factorNode != null)
                     ? factorNode.getTypeSpec()
@@ -253,7 +260,8 @@ public class ExpressionParser extends PascalParserTD {
                 case SLASH: {
                     // All integer and real operand combinations
                     // ==> real result.
-                    if (TypeChecker.areBothInteger(resultType, factorType) || TypeChecker.isAtLeastOneReal(resultType, factorType)) {
+                    if (TypeChecker.areBothInteger(resultType, factorType)
+                            || TypeChecker.isAtLeastOneReal(resultType, factorType)) {
                         resultType = Predefined.realType;
                     } else {
                         errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
@@ -296,8 +304,7 @@ public class ExpressionParser extends PascalParserTD {
 
         switch ((PascalTokenType) tokenType) {
             case IDENTIFIER: {
-                rootNode = parseIdentifier(token);
-                break;
+                return parseIdentifier(token);
             }
             case INTEGER: {
                 rootNode = ICodeFactory.createICodeNode(INTEGER_CONSTANT);
@@ -316,7 +323,6 @@ public class ExpressionParser extends PascalParserTD {
                 // consume the number
                 token = nextToken();
 
-                //TODO: Test this
                 rootNode.setTypeSpec(Predefined.realType);
                 break;
             }
@@ -365,6 +371,9 @@ public class ExpressionParser extends PascalParserTD {
                 token = nextToken();
 
                 rootNode = parseExpression(token);
+                TypeSpec resultType = rootNode != null
+                        ? rootNode.getTypeSpec()
+                        : Predefined.undefinedType;
 
                 token = currentToken();
                 if (token.getType() == RIGHT_PAREN) {
@@ -372,6 +381,8 @@ public class ExpressionParser extends PascalParserTD {
                 } else {
                     errorHandler.flag(token, MISSING_RIGHT_PAREN, this);
                 }
+
+                rootNode.setTypeSpec(resultType);
                 break;
             }
             default: {
@@ -423,7 +434,9 @@ public class ExpressionParser extends PascalParserTD {
                 // consume the constant identifier
                 token = nextToken();
 
-                if(rootNode != null) rootNode.setTypeSpec(type);
+                if(rootNode != null) {
+                    rootNode.setTypeSpec(type);
+                }
 
                 break;
             }

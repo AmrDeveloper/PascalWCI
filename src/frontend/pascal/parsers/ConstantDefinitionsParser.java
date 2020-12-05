@@ -18,29 +18,30 @@ import static intermediate.symtabimpl.DefinitionImpl.CONSTANT;
 import static intermediate.symtabimpl.DefinitionImpl.ENUMERATION_CONSTANT;
 import static intermediate.symtabimpl.SymbolTableKeyImp.CONSTANT_VALUE;
 
-public class ConstantDefinitionsParser extends PascalParserTD {
+public class ConstantDefinitionsParser extends DeclarationsParser {
 
     // Synchronization set for a constant identifier.
-    private static final EnumSet<PascalTokenType> IDENTIFIER_SET = DeclarationsParser.TYPE_START_SET.clone();
-
+    private static final EnumSet<PascalTokenType> IDENTIFIER_SET =
+            DeclarationsParser.TYPE_START_SET.clone();
     static {
         IDENTIFIER_SET.add(IDENTIFIER);
     }
 
     // Synchronization set for starting a constant.
-    static final EnumSet<PascalTokenType> CONSTANT_START_SET = EnumSet.of(IDENTIFIER, INTEGER, REAL, PLUS, MINUS, STRING, SEMICOLON);
+    static final EnumSet<PascalTokenType> CONSTANT_START_SET =
+            EnumSet.of(IDENTIFIER, INTEGER, REAL, PLUS, MINUS, STRING, SEMICOLON);
 
     // Synchronization set for the = token.
-    private static final EnumSet<PascalTokenType> EQUALS_SET = CONSTANT_START_SET.clone();
-
+    private static final EnumSet<PascalTokenType> EQUALS_SET =
+            CONSTANT_START_SET.clone();
     static {
         EQUALS_SET.add(EQUALS);
         EQUALS_SET.add(SEMICOLON);
     }
 
     // Synchronization set for the start of the next definition or declaration.
-    private static final EnumSet<PascalTokenType> NEXT_START_SET = DeclarationsParser.TYPE_START_SET.clone();
-
+    private static final EnumSet<PascalTokenType> NEXT_START_SET =
+            DeclarationsParser.TYPE_START_SET.clone();
     static {
         NEXT_START_SET.add(SEMICOLON);
         NEXT_START_SET.add(IDENTIFIER);
@@ -50,7 +51,7 @@ public class ConstantDefinitionsParser extends PascalParserTD {
         super(parent);
     }
 
-    public void parse(Token token) throws Exception {
+    public SymbolTableEntry parse(Token token, SymbolTableEntry parentId) throws Exception {
         token = synchronize(IDENTIFIER_SET);
 
         // Loop to parse a sequence of constant definitions
@@ -90,8 +91,10 @@ public class ConstantDefinitionsParser extends PascalParserTD {
                 constantId.setAttribute(CONSTANT_VALUE, value);
 
                 // Set the constant's type
-                TypeSpec constantType = constantToken.getType() == IDENTIFIER ?
-                        getConstantType(constantToken) : getConstantType(value);
+                TypeSpec constantType = constantToken.getType() == IDENTIFIER
+                        ? getConstantType(constantToken)
+                        : getConstantType(value);
+
                 constantId.setTypeSpec(constantType);
             }
 
@@ -100,7 +103,6 @@ public class ConstantDefinitionsParser extends PascalParserTD {
 
             // Look for one or more semicolons after a definition
             if (tokenType == SEMICOLON) {
-                //TODO: check later if can replaces with 2 if
                 while (token.getType() == SEMICOLON) {
                     // consume the ;
                     token = nextToken();
@@ -115,6 +117,8 @@ public class ConstantDefinitionsParser extends PascalParserTD {
 
             token = synchronize(IDENTIFIER_SET);
         }
+
+        return null;
     }
 
     protected Object parseConstant(Token token) throws Exception {
@@ -164,7 +168,7 @@ public class ConstantDefinitionsParser extends PascalParserTD {
     }
 
     protected Object parseIdentifierConstant(Token token, TokenType sign) throws Exception {
-        String name = token.getText();
+        String name = token.getText().toLowerCase();
         SymbolTableEntry id = symbolTableStack.lookup(name);
 
         // consume the identifier
@@ -227,7 +231,8 @@ public class ConstantDefinitionsParser extends PascalParserTD {
     }
 
     protected TypeSpec getConstantType(Token identifier) {
-        SymbolTableEntry id = symbolTableStack.lookup(identifier.getText());
+        String name = identifier.getText().toLowerCase();
+        SymbolTableEntry id = symbolTableStack.lookup(name);
 
         if (id == null) return null;
 

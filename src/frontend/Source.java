@@ -64,7 +64,7 @@ public class Source implements MessageProducer {
 
         if(line != null) {
             ++lineNum;
-            sendMessage(new Message(MessageType.SOURCE_LINE, new Object[] {lineNum, lineNum}));
+            sendMessage(new Message(MessageType.SOURCE_LINE, new Object[] {lineNum, line}));
         }
     }
 

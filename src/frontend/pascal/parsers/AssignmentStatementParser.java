@@ -6,7 +6,6 @@ import frontend.pascal.PascalParserTD;
 import frontend.pascal.PascalTokenType;
 import intermediate.ICodeFactory;
 import intermediate.ICodeNode;
-import intermediate.SymbolTableEntry;
 import intermediate.TypeSpec;
 import intermediate.symtabimpl.Predefined;
 import intermediate.typeimpl.TypeChecker;
@@ -14,9 +13,7 @@ import intermediate.typeimpl.TypeChecker;
 import java.util.EnumSet;
 
 import static frontend.pascal.PascalTokenType.COLON_EQUALS;
-import static intermediate.icodeimpl.ICodeKeyImpl.ID;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.ASSIGN;
-import static intermediate.icodeimpl.ICodeNodeTypeImpl.VARIABLE;
 
 public class AssignmentStatementParser extends PascalParserTD {
 

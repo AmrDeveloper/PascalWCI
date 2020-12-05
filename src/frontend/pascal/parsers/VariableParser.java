@@ -17,9 +17,10 @@ import static frontend.pascal.PascalTokenType.*;
 import static intermediate.icodeimpl.ICodeKeyImpl.ID;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.SUBSCRIPTS;
 import static intermediate.symtabimpl.DefinitionImpl.*;
+import static intermediate.symtabimpl.DefinitionImpl.FUNCTION;
 import static intermediate.typeimpl.TypeKeyImpl.*;
 
-public class VariableParser extends PascalParserTD {
+public class VariableParser extends StatementParser {
 
     // Set to true to parse a function name
     // as the target of an assignment.
@@ -55,9 +56,9 @@ public class VariableParser extends PascalParserTD {
     public ICodeNode parse(Token token, SymbolTableEntry variableId) throws Exception {
         // Check how the variable is defined.
         Definition definitionCode = variableId.getDefinition();
-        if ((definitionCode != VARIABLE)
-                && (definitionCode != VALUE_PARM)
-                && (definitionCode != VAR_PARM)) {
+        if (!((definitionCode == VARIABLE) || (definitionCode == VALUE_PARM) ||
+                (definitionCode == VAR_PARM) ||
+                (isFunctionTarget && (definitionCode == FUNCTION)))) {
             errorHandler.flag(token, INVALID_IDENTIFIER_USAGE, this);
         }
 
@@ -71,7 +72,7 @@ public class VariableParser extends PascalParserTD {
 
         // Parse array subscript or record fields
         TypeSpec variableType = variableId.getTypeSpec();
-        if(!isFunctionTarget) {
+        if (!isFunctionTarget) {
             // Parse array subscripts or record fields.
             while (SUBSCRIPT_FIELD_START_SET.contains(token.getType())) {
                 ICodeNode subFldNode = token.getType() == LEFT_BRACKET
@@ -134,7 +135,7 @@ public class VariableParser extends PascalParserTD {
             }
             token = currentToken();
         }
-        while (token.getType() != COMMA);
+        while (token.getType() == COMMA);
 
         // Synchronize at the ] token.
         token = synchronize(RIGHT_BRACKET_SET);
@@ -145,6 +146,7 @@ public class VariableParser extends PascalParserTD {
         } else {
             errorHandler.flag(token, MISSING_RIGHT_BRACKET, this);
         }
+
         subscriptsNode.setTypeSpec(variableType);
         return subscriptsNode;
     }

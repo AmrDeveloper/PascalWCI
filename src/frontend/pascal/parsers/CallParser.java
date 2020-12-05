@@ -42,11 +42,13 @@ public class CallParser extends StatementParser {
     }
 
     public ICodeNode parse(Token token) throws Exception {
-        SymbolTableEntry routineId = symbolTableStack.lookupLocal(token.getText().toLowerCase());
+        SymbolTableEntry routineId = symbolTableStack.lookup(token.getText().toLowerCase());
         RoutineCode routineCode = (RoutineCode) routineId.getAttribute(ROUTINE_CODE);
-        StatementParser callParser = (routineCode == DECLARED) || (routineCode == FORWARD)
-                ? new CallDeclaredParser(this)
-                : new CallStandardParser(this);
+        StatementParser callParser =
+                (routineCode == DECLARED)
+                        || (routineCode == FORWARD)
+                        ? new CallDeclaredParser(this)
+                        : new CallStandardParser(this);
 
         return callParser.parse(token);
     }
@@ -102,10 +104,10 @@ public class CallParser extends StatementParser {
                 TypeForm form = type.getForm();
 
                 if (!((actualNode.getType() == ICodeNodeTypeImpl.VARIABLE)
-                        && ((form == SCALAR)
-                        || (type == Predefined.booleanType)
-                        || ((form == SUBRANGE)
-                        && (type.baseType() == Predefined.integerType))))) {
+                        && ((form == SCALAR) ||
+                        (type == Predefined.booleanType) ||
+                        ((form == SUBRANGE) &&
+                                (type.baseType() == Predefined.integerType))) )) {
                     errorHandler.flag(token, INVALID_VAR_PARM, this);
                 }
             }

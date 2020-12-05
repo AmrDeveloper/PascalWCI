@@ -25,9 +25,6 @@ import static message.MessageType.TOKEN;
 // Top Down Pascal Parser
 public class PascalParserTD extends Parser {
 
-    // Name of the routine being parsed
-    private SymbolTableEntry routineId;
-
     protected static PascalErrorHandler errorHandler = new PascalErrorHandler();
 
     public PascalParserTD(Scanner scanner) {

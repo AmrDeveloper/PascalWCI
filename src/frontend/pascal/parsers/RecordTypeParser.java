@@ -40,7 +40,7 @@ public class RecordTypeParser extends PascalParserTD {
         // Parse the field declarations.
         VariableDeclarationsParser variableDeclarationsParser = new VariableDeclarationsParser(this);
         variableDeclarationsParser.setDefinition(DefinitionImpl.FIELD);
-        variableDeclarationsParser.parse(token);
+        variableDeclarationsParser.parse(token, null);
 
         // Pop off the record's symbol table
         symbolTableStack.pop();

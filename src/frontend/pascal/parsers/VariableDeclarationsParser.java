@@ -10,18 +10,27 @@ import intermediate.TypeSpec;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 
 import static frontend.pascal.PascalErrorCode.*;
 import static frontend.pascal.PascalTokenType.*;
+import static intermediate.symtabimpl.DefinitionImpl.*;
 
-public class VariableDeclarationsParser extends PascalParserTD {
+public class VariableDeclarationsParser extends DeclarationsParser {
 
     // how to define the identifier
     private Definition definition;
 
+    public VariableDeclarationsParser(PascalParserTD parent) {
+        super(parent);
+    }
+
+    protected void setDefinition(Definition definition) {
+        this.definition = definition;
+    }
+
     // Synchronization set for a variable identifier.
-    static final EnumSet<PascalTokenType> IDENTIFIER_SET = DeclarationsParser.VAR_START_SET.clone();
+    static final EnumSet<PascalTokenType> IDENTIFIER_SET =
+            DeclarationsParser.VAR_START_SET.clone();
 
     static {
         IDENTIFIER_SET.add(IDENTIFIER);
@@ -29,40 +38,39 @@ public class VariableDeclarationsParser extends PascalParserTD {
         IDENTIFIER_SET.add(SEMICOLON);
     }
 
-    // Synchronization set for the start of the next definition or declaration.
-    static final EnumSet<PascalTokenType> NEXT_START_SET = DeclarationsParser.ROUTINE_START_SET.clone();
-
-    static {
-        NEXT_START_SET.add(IDENTIFIER);
-        NEXT_START_SET.add(SEMICOLON);
-    }
-
     // Synchronization set to start a sublist identifier.
-    static final EnumSet<PascalTokenType> IDENTIFIER_START_SET = EnumSet.of(IDENTIFIER, COMMA);
+    static final EnumSet<PascalTokenType> IDENTIFIER_START_SET =
+            EnumSet.of(IDENTIFIER, COMMA);
 
     // Synchronization set to follow a sublist identifier.
-    private static final EnumSet<PascalTokenType> IDENTIFIER_FOLLOW_SET = EnumSet.of(COLON, SEMICOLON);
+    private static final EnumSet<PascalTokenType> IDENTIFIER_FOLLOW_SET =
+            EnumSet.of(COLON, SEMICOLON);
 
     static {
         IDENTIFIER_FOLLOW_SET.addAll(DeclarationsParser.VAR_START_SET);
     }
 
     // Synchronization set for the , token.
-    private static final EnumSet<PascalTokenType> COMMA_SET = EnumSet.of(COMMA, COLON, IDENTIFIER, SEMICOLON);
+    private static final EnumSet<PascalTokenType> COMMA_SET =
+            EnumSet.of(COMMA, COLON, IDENTIFIER, SEMICOLON);
 
-    // Synchronization set for the : token.
-    private static final EnumSet<PascalTokenType> COLON_SET = EnumSet.of(COLON, SEMICOLON);
+    // Synchronization set for the start of the next definition or declaration.
+    static final EnumSet<PascalTokenType> NEXT_START_SET =
+            DeclarationsParser.ROUTINE_START_SET.clone();
 
-    public VariableDeclarationsParser(PascalParserTD parent) {
-        super(parent);
+    static {
+        NEXT_START_SET.add(IDENTIFIER);
+        NEXT_START_SET.add(SEMICOLON);
     }
 
-    public void parse(Token token) throws Exception {
+    public SymbolTableEntry parse(Token token, SymbolTableEntry parentId)
+            throws Exception {
         token = synchronize(IDENTIFIER_SET);
 
         // Loop to parse a sequence of variable declarations
         // separated by semicolons.
         while (token.getType() == IDENTIFIER) {
+
             // Parse the identifier sublist and its type specification.
             parseIdentifierSublist(token, IDENTIFIER_FOLLOW_SET, COMMA_SET);
 
@@ -72,10 +80,10 @@ public class VariableDeclarationsParser extends PascalParserTD {
             // Look for one or more semicolons after a definition.
             if (tokenType == SEMICOLON) {
                 while (token.getType() == SEMICOLON) {
-                    // consume the ;
-                    token = nextToken();
+                    token = nextToken();  // consume the ;
                 }
             }
+
             // If at the start of the next definition or declaration,
             // then missing a semicolon.
             else if (NEXT_START_SET.contains(tokenType)) {
@@ -84,97 +92,104 @@ public class VariableDeclarationsParser extends PascalParserTD {
 
             token = synchronize(IDENTIFIER_SET);
         }
+
+        return null;
     }
 
-    protected List<SymbolTableEntry> parseIdentifierSublist(Token token,
-                                                            EnumSet<PascalTokenType> followSet,
-                                                            EnumSet<PascalTokenType> commaSet) throws Exception {
-        List<SymbolTableEntry> subList = new ArrayList<>();
+    protected ArrayList<SymbolTableEntry> parseIdentifierSublist(
+            Token token,
+            EnumSet<PascalTokenType> followSet,
+            EnumSet<PascalTokenType> commaSet)
+            throws Exception {
+        ArrayList<SymbolTableEntry> sublist = new ArrayList<>();
 
         do {
             token = synchronize(IDENTIFIER_START_SET);
             SymbolTableEntry id = parseIdentifier(token);
 
-            if (id != null) subList.add(id);
+            if (id != null) {
+                sublist.add(id);
+            }
 
             token = synchronize(commaSet);
             TokenType tokenType = token.getType();
 
             // Look for the comma.
             if (tokenType == COMMA) {
-                // consume the comma
-                token = nextToken();
+                token = nextToken();  // consume the comma
 
                 if (followSet.contains(token.getType())) {
                     errorHandler.flag(token, MISSING_IDENTIFIER, this);
                 }
-            }else if(IDENTIFIER_START_SET.contains(tokenType)) {
+            } else if (IDENTIFIER_START_SET.contains(tokenType)) {
                 errorHandler.flag(token, MISSING_COMMA, this);
             }
-        }while (!followSet.contains(token.getType()));
+        } while (!followSet.contains(token.getType()));
 
-        // Parse the type specification
-        TypeSpec type = parseTypeSpec(token);
+        if (definition != PROGRAM_PARM) {
 
-        // Assign the type specification to each identifier in the list.
-        for(SymbolTableEntry variableId : subList) {
-            variableId.setTypeSpec(type);
+            // Parse the type specification.
+            TypeSpec type = parseTypeSpec(token);
+
+            // Assign the type specification to each identifier in the list.
+            for (SymbolTableEntry variableId : sublist) {
+                variableId.setTypeSpec(type);
+            }
         }
 
-        return subList;
+        return sublist;
     }
 
-    private SymbolTableEntry parseIdentifier(Token token) throws Exception {
+    private SymbolTableEntry parseIdentifier(Token token)
+            throws Exception {
         SymbolTableEntry id = null;
 
-        if(token.getType() == IDENTIFIER) {
+        if (token.getType() == IDENTIFIER) {
             String name = token.getText().toLowerCase();
             id = symbolTableStack.lookupLocal(name);
 
-            // Enter a new identifier into the symbol table
-            if(id == null) {
+            // Enter a new identifier into the symbol table.
+            if (id == null) {
                 id = symbolTableStack.enterLocal(name);
                 id.setDefinition(definition);
                 id.appendLineNumber(token.getLineNumber());
-            }
-            else {
+            } else {
                 errorHandler.flag(token, IDENTIFIER_REDEFINED, this);
             }
 
-            // consume the identifier token
-            token = nextToken();
-        }
-        else {
+            token = nextToken();   // consume the identifier token
+        } else {
             errorHandler.flag(token, MISSING_IDENTIFIER, this);
         }
 
         return id;
     }
 
-    protected TypeSpec parseTypeSpec(Token token) throws Exception {
-        // Synchronize  on the : token.
+    // Synchronization set for the : token.
+    private static final EnumSet<PascalTokenType> COLON_SET =
+            EnumSet.of(COLON, SEMICOLON);
+
+    protected TypeSpec parseTypeSpec(Token token)
+            throws Exception {
+        // Synchronize on the : token.
         token = synchronize(COLON_SET);
-        if(token.getType() == COLON) {
-            // consume the :
-            token = nextToken();
-        }
-        else {
+        if (token.getType() == COLON) {
+            token = nextToken(); // consume the :
+        } else {
             errorHandler.flag(token, MISSING_COLON, this);
         }
 
         // Parse the type specification.
-        TypeSpecificationParser typeSpecificationParser = new TypeSpecificationParser(this);
+        TypeSpecificationParser typeSpecificationParser =
+                new TypeSpecificationParser(this);
         TypeSpec type = typeSpecificationParser.parse(token);
 
+        // Formal parameters and functions must have named types.
+        if ((definition != VARIABLE) && (definition != FIELD) &&
+                (type != null) && (type.getIdentifier() == null)) {
+            errorHandler.flag(token, INVALID_TYPE, this);
+        }
 
         return type;
-    }
-
-    public void setDefinition (Definition definition){
-        this.definition = definition;
-    }
-
-    public Definition getDefinition () {
-        return definition;
     }
 }

@@ -27,9 +27,6 @@ public class DeclaredRoutineParser extends PascalParserTD {
     // counter for dummy routine names
     private static int dummyCounter = 0;
 
-    // entry of parent routine's name
-    private SymbolTableEntry parentId;
-
     // Synchronization set for a formal parameter sublist.
     private static final EnumSet<PascalTokenType> PARAMETER_SET = DeclarationsParser.DECLARATION_START_SET.clone();
 
@@ -110,7 +107,6 @@ public class DeclaredRoutineParser extends PascalParserTD {
             }
         }
 
-
         // Parse the routine name
         routineId = parseRoutineName(token, dummyName);
         routineId.setDefinition(routineDefinition);
@@ -130,6 +126,7 @@ public class DeclaredRoutineParser extends PascalParserTD {
         } else {
             routineId.setAttribute(ROUTINE_SYMTAB, symbolTableStack.push());
         }
+
 
         // Program: Set the program identifier in the symbol table stack
         if (routineDefinition == DefinitionImpl.PROGRAM) {

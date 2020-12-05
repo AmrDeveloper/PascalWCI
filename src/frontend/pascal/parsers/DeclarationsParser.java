@@ -13,22 +13,23 @@ import static intermediate.symtabimpl.DefinitionImpl.VARIABLE;
 
 public class DeclarationsParser extends PascalParserTD {
 
-    static final EnumSet<PascalTokenType> DECLARATION_START_SET = EnumSet.of(CONST, TYPE, VAR, PROCEDURE, FUNCTION, BEGIN);
+    static final EnumSet<PascalTokenType> DECLARATION_START_SET =
+            EnumSet.of(CONST, TYPE, VAR, PROCEDURE, FUNCTION, BEGIN);
 
-    static final EnumSet<PascalTokenType> TYPE_START_SET = DECLARATION_START_SET.clone();
-
+    static final EnumSet<PascalTokenType> TYPE_START_SET =
+            DECLARATION_START_SET.clone();
     static {
         TYPE_START_SET.remove(CONST);
     }
 
-    static final EnumSet<PascalTokenType> VAR_START_SET = TYPE_START_SET.clone();
-
+    static final EnumSet<PascalTokenType> VAR_START_SET =
+            TYPE_START_SET.clone();
     static {
         VAR_START_SET.remove(TYPE);
     }
 
-    static final EnumSet<PascalTokenType> ROUTINE_START_SET = VAR_START_SET.clone();
-
+    static final EnumSet<PascalTokenType> ROUTINE_START_SET =
+            VAR_START_SET.clone();
     static {
         ROUTINE_START_SET.remove(VAR);
     }
@@ -40,34 +41,34 @@ public class DeclarationsParser extends PascalParserTD {
     public SymbolTableEntry parse(Token token, SymbolTableEntry parentId) throws Exception {
         token = synchronize(DECLARATION_START_SET);
 
-        if(token.getType() == CONST) {
+        if (token.getType() == CONST) {
             // consume the const
             token = nextToken();
 
             ConstantDefinitionsParser constantDefinitionsParser
                     = new ConstantDefinitionsParser(this);
-            constantDefinitionsParser.parse(token);
+            constantDefinitionsParser.parse(token, null);
         }
 
         token = synchronize(TYPE_START_SET);
-        if(token.getType() == TYPE) {
+        if (token.getType() == TYPE) {
             // consume TYPE
             token = nextToken();
 
             TypeDefinitionsParser typeDefinitionsParser
                     = new TypeDefinitionsParser(this);
-            typeDefinitionsParser.parse(token);
+            typeDefinitionsParser.parse(token, null);
         }
 
         token = synchronize(VAR_START_SET);
-        if(token.getType() == VAR) {
+        if (token.getType() == VAR) {
             // consume VAR
             token = nextToken();
 
             VariableDeclarationsParser variableDeclarationsParser
                     = new VariableDeclarationsParser(this);
             variableDeclarationsParser.setDefinition(VARIABLE);
-            variableDeclarationsParser.parse(token);
+            variableDeclarationsParser.parse(token, null);
         }
 
         token = synchronize(ROUTINE_START_SET);
@@ -80,7 +81,7 @@ public class DeclarationsParser extends PascalParserTD {
 
             // Look for one or more semicolons after a definition
             token = currentToken();
-            if(token.getType() == SEMICOLON) {
+            if (token.getType() == SEMICOLON) {
                 while (token.getType() == SEMICOLON) {
                     // consume the ;
                     token = nextToken();

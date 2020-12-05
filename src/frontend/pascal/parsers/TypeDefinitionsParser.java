@@ -13,7 +13,7 @@ import java.util.EnumSet;
 import static frontend.pascal.PascalErrorCode.*;
 import static frontend.pascal.PascalTokenType.*;
 
-public class TypeDefinitionsParser extends PascalParserTD {
+public class TypeDefinitionsParser extends DeclarationsParser {
 
     // Synchronization set for a type identifier
     private static final EnumSet<PascalTokenType> IDENTIFIER_SET = DeclarationsParser.VAR_START_SET.clone();
@@ -44,7 +44,7 @@ public class TypeDefinitionsParser extends PascalParserTD {
         super(parent);
     }
 
-    public void parse(Token token) throws Exception {
+    public SymbolTableEntry parse(Token token, SymbolTableEntry parentId) throws Exception {
         token = synchronize(IDENTIFIER_SET);
 
         // Loop to parse a sequence of type definitions
@@ -112,5 +112,6 @@ public class TypeDefinitionsParser extends PascalParserTD {
             token = synchronize(IDENTIFIER_SET);
         }
 
+        return null;
     }
 }

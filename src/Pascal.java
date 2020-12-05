@@ -112,7 +112,7 @@ public class Pascal {
             switch (type) {
                 case SOURCE_LINE: {
                     int lineNumber = (Integer) body[0];
-                    Integer lineText = (Integer) body[1];
+                    String lineText = (String) body[1];
 
                     System.out.println(String.format(SOURCE_LINE_FORMAT, lineNumber, lineText));
 
