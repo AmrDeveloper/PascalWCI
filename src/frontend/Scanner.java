@@ -27,4 +27,20 @@ public abstract class Scanner {
     public char nextChar() throws Exception {
         return source.nextChar();
     }
+
+    public boolean atEol() throws Exception {
+        return source.atEol();
+    }
+
+    public boolean atEof()
+            throws Exception
+    {
+        return source.atEof();
+    }
+
+    public void skipToNextLine()
+            throws Exception
+    {
+        source.skipToNextLine();
+    }
 }

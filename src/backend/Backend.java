@@ -15,7 +15,7 @@ public abstract class Backend implements MessageProducer {
         messageHandler = new MessageHandler();
     }
 
-    protected SymbolTableStack symbolTable;
+    protected SymbolTableStack symbolTableStack;
     protected ICode iCode;
 
     @Override

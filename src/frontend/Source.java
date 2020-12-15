@@ -58,6 +58,25 @@ public class Source implements MessageProducer {
         return (nextPosition < line.length()) ? line.charAt(nextPosition) : EOL;
     }
 
+    public boolean atEol() throws Exception {
+        return (line != null) && (currentPosition == line.length());
+    }
+
+    public boolean atEof() throws Exception {
+        // First time ?
+        if(currentPosition == -2) {
+            readLine();
+        }
+
+        return line == null;
+    }
+
+    public void skipToNextLine() throws Exception {
+        if(line != null) {
+            currentPosition = line.length() + 1;
+        }
+    }
+
     private void readLine() throws Exception {
         line = reader.readLine();
         currentPosition = -1;
