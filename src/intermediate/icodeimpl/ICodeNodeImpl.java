@@ -66,6 +66,7 @@ public class ICodeNodeImpl
     @Override
     public ICodeNode copy() {
         ICodeNodeImpl copy = (ICodeNodeImpl) ICodeFactory.createICodeNode(type);
+        copy.setTypeSpec(typeSpec);
 
         //Copy attributes from current Instance to new Instance
         Set<Entry<ICodeKey, Object>> attributes = entrySet();

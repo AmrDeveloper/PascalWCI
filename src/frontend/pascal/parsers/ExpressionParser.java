@@ -190,6 +190,7 @@ public class ExpressionParser extends StatementParser {
                     }
                     else {
                         errorHandler.flag(token, INCOMPATIBLE_TYPES, this);
+                        //TODO: BUG
                     }
 
                     break;

@@ -116,7 +116,8 @@ public class VariableDeclarationsParser extends DeclarationsParser {
 
             // Look for the comma.
             if (tokenType == COMMA) {
-                token = nextToken();  // consume the comma
+                // consume the comma
+                token = nextToken();
 
                 if (followSet.contains(token.getType())) {
                     errorHandler.flag(token, MISSING_IDENTIFIER, this);
@@ -157,7 +158,8 @@ public class VariableDeclarationsParser extends DeclarationsParser {
                 errorHandler.flag(token, IDENTIFIER_REDEFINED, this);
             }
 
-            token = nextToken();   // consume the identifier token
+            // consume the identifier token
+            token = nextToken();
         } else {
             errorHandler.flag(token, MISSING_IDENTIFIER, this);
         }
@@ -174,7 +176,8 @@ public class VariableDeclarationsParser extends DeclarationsParser {
         // Synchronize on the : token.
         token = synchronize(COLON_SET);
         if (token.getType() == COLON) {
-            token = nextToken(); // consume the :
+            // consume the :
+            token = nextToken();
         } else {
             errorHandler.flag(token, MISSING_COLON, this);
         }

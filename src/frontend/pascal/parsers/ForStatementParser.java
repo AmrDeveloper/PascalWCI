@@ -131,17 +131,20 @@ public class ForStatementParser extends StatementParser {
         // Create an assignment with a copy of the control variable
         // to advance the value of the variable.
         ICodeNode nextAssignNode = ICodeFactory.createICodeNode(ASSIGN);
+        nextAssignNode.setTypeSpec(controlType);
         nextAssignNode.addChild(controlVarNode.copy());
 
         // Create the arithmetic operator node:
         // ADD for TO, or SUBTRACT for DOWNTO.
         ICodeNode arithOpNode = ICodeFactory.createICodeNode(direction == TO ? ADD : SUBTRACT);
+        arithOpNode.setTypeSpec(Predefined.integerType);
 
         // The operator node adopts a copy of the loop variable as its
         // first child and the value 1 as its second child.
         arithOpNode.addChild(controlVarNode.copy());
         ICodeNode oneNode = ICodeFactory.createICodeNode(INTEGER_CONSTANT);
         oneNode.setAttribute(VALUE, 1);
+        oneNode.setTypeSpec(Predefined.integerType);
         arithOpNode.addChild(oneNode);
 
         // The next ASSIGN node adopts the arithmetic operator node as its
