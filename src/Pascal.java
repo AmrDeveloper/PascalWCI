@@ -329,7 +329,6 @@ public class Pascal {
                     break;
                 }
                 case RUNTIME_ERROR: {
-                    /*
                     Object[] body = (Object[]) message.getBody();
                     String errorMessage = (String) body[0];
                     Integer lineNumber = (Integer) body[1];
@@ -338,8 +337,6 @@ public class Pascal {
                         System.out.print(" AT LINE " + String.format("%03d", lineNumber));
                     }
                     System.out.println(": " + errorMessage);
-
-                     */
                     break;
                 }
             }

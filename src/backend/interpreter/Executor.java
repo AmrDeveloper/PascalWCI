@@ -3,11 +3,9 @@ package backend.interpreter;
 import backend.Backend;
 import backend.BackendFactory;
 import backend.interpreter.executors.CallDeclaredExecutor;
-import backend.interpreter.executors.StatementExecutor;
 import frontend.Scanner;
 import frontend.Source;
 import frontend.pascal.PascalScanner;
-import frontend.pascal.parsers.CallDeclaredParser;
 import intermediate.*;
 import message.Message;
 
@@ -42,16 +40,13 @@ public class Executor extends Backend {
 
     public Executor(String inputPath) {
         try {
-            standardIn = inputPath != null
+            standardIn = (inputPath != null) && (!inputPath.isEmpty())
                     ? new PascalScanner(new Source(new BufferedReader(new FileReader(inputPath))))
                     : new PascalScanner(new Source(new BufferedReader(new InputStreamReader(System.in))));
         }
         catch (IOException ignored) {
 
         }
-
-        System.out.println(standardIn == null);
-        System.exit(1);
         debugger = BackendFactory.createDebugger(COMMAND_LINE, this, runtimeStack);
     }
 
