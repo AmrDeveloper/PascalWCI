@@ -124,6 +124,8 @@ public class CallStandardExecutor extends CallExecutor {
                         throw new Exception();
                     }
                 } catch (Exception ex) {
+                    System.out.println(standardIn == null);
+                    System.exit(1);
                     errorHandler.flag(callNode, RuntimeErrorCode.INVALID_INPUT, this);
 
                     if (type == Predefined.realType) {

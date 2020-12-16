@@ -20,7 +20,7 @@ public class RuntimeErrorHandler {
         }
 
         backend.sendMessage(new Message(MessageType.RUNTIME_ERROR, new Object[]{
-            errorCode,
+            errorCode.toString(),
             (Integer) node.getAttribute(LINE)
         }));
 

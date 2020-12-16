@@ -15,6 +15,7 @@ import util.CrossReferencer;
 import util.ParseTreePrinter;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 
 import static frontend.pascal.PascalTokenType.STRING;
@@ -36,7 +37,7 @@ public class Pascal {
     private boolean call;             // true to print routine call tracing
     private boolean returnn;          // true to print routine return tracing
 
-    public Pascal(String operation, String filePath, String flags) {
+    public Pascal(String operation, String sourcePath, String inputPath,  String flags) {
         try {
             intermediate = flags.indexOf('i') > -1;
             xref = flags.indexOf('x') > -1;
@@ -46,13 +47,13 @@ public class Pascal {
             call = flags.indexOf('c') > -1;
             returnn = flags.indexOf('r') > -1;
 
-            source = new Source(new BufferedReader(new FileReader(filePath)));
+            source = new Source(new BufferedReader(new FileReader(sourcePath)));
             source.addMessageListener(new SourceMessageListener());
 
             parser = FrontendFactory.createParser("Pascal", "top-down", source);
             parser.addMessageListener(new ParserMessageListener());
 
-            backend = BackendFactory.createBackend(operation);
+            backend = BackendFactory.createBackend(operation, inputPath);
             backend.addMessageListener(new BackendMessageListener());
 
             parser.parse();
@@ -89,24 +90,42 @@ public class Pascal {
     public static void main(String[] args) {
         try {
             String operation = args[0];
-
-            if (!(operation.equalsIgnoreCase("compile") || operation.equalsIgnoreCase("execute"))) {
+            
+            if (!("compile".equalsIgnoreCase(operation)) 
+                    || !("execute".equalsIgnoreCase(operation))) {
                 throw new Exception();
             }
 
             int i = 0;
             StringBuilder flags = new StringBuilder();
-
+            
+            // Flags
             while ((++i < args.length) && (args[i].charAt(0) == '-')) {
                 flags.append(args[i].substring(1));
             }
-
+            
+            String sourcePath = null;
+            String inputPath = null;
+            
+            // Source path
             if (i < args.length) {
-                String path = args[i];
-                new Pascal(operation, path, flags.toString());
+                sourcePath = args[i];
             } else {
                 throw new Exception();
             }
+            
+            // Runtime input data file
+            if (++i < args.length) {
+                inputPath = args[i];
+                
+                File inputFile = new File(inputPath);
+                if(!inputFile.exists()) {
+                    System.out.println("Input file '" + inputPath + "' does not exist.");
+                    throw new Exception();
+                }
+            }
+
+            new Pascal(operation, sourcePath, inputPath, flags.toString());
         } catch (Exception e) {
             System.out.println(USAGE);
         }
@@ -310,14 +329,17 @@ public class Pascal {
                     break;
                 }
                 case RUNTIME_ERROR: {
-                    Object body[] = (Object[]) message.getBody();
-                    RuntimeErrorCode errorMessage = (RuntimeErrorCode) body[0];
+                    /*
+                    Object[] body = (Object[]) message.getBody();
+                    String errorMessage = (String) body[0];
                     Integer lineNumber = (Integer) body[1];
                     System.out.print("*** RUNTIME ERROR");
                     if (lineNumber != null) {
                         System.out.print(" AT LINE " + String.format("%03d", lineNumber));
                     }
                     System.out.println(": " + errorMessage);
+
+                     */
                     break;
                 }
             }

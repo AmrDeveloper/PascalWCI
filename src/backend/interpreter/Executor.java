@@ -1,6 +1,7 @@
 package backend.interpreter;
 
 import backend.Backend;
+import backend.BackendFactory;
 import backend.interpreter.executors.CallDeclaredExecutor;
 import backend.interpreter.executors.StatementExecutor;
 import frontend.Scanner;
@@ -12,6 +13,7 @@ import message.Message;
 
 import java.io.*;
 
+import static backend.interpreter.DebuggerType.COMMAND_LINE;
 import static intermediate.icodeimpl.ICodeKeyImpl.ID;
 import static intermediate.icodeimpl.ICodeNodeTypeImpl.CALL;
 import static message.MessageType.INTERPRETER_SUMMARY;
@@ -28,24 +30,34 @@ public class Executor extends Backend {
     // Standard output
     protected static PrintWriter standardOut;
 
+    // interactive source-level debugger
+    protected Debugger debugger;
+
     static {
         executionCount = 0;
         runtimeStack = MemoryFactory.createRuntimeStack();
         errorHandler = new RuntimeErrorHandler();
-
-        try{
-            standardIn = new PascalScanner(new Source(new BufferedReader(new InputStreamReader(System.in))));
-            standardOut = new PrintWriter(new PrintStream(System.out));
-        }
-        catch (IOException ignored) {}
+        standardOut = new PrintWriter(new PrintStream(System.out));
     }
 
-    public Executor() {
+    public Executor(String inputPath) {
+        try {
+            standardIn = inputPath != null
+                    ? new PascalScanner(new Source(new BufferedReader(new FileReader(inputPath))))
+                    : new PascalScanner(new Source(new BufferedReader(new InputStreamReader(System.in))));
+        }
+        catch (IOException ignored) {
 
+        }
+
+        System.out.println(standardIn == null);
+        System.exit(1);
+        debugger = BackendFactory.createDebugger(COMMAND_LINE, this, runtimeStack);
     }
 
     public Executor(Executor parent) {
         super();
+        this.debugger = parent.debugger;
     }
 
     @Override
