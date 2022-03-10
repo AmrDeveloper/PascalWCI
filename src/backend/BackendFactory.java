@@ -6,16 +6,17 @@ import backend.interpreter.DebuggerType;
 import backend.interpreter.Executor;
 import backend.interpreter.RuntimeStack;
 import backend.interpreter.debuggerimpl.CommandLineDebugger;
+import backend.interpreter.debuggerimpl.GUIDebugger;
 import intermediate.TypeSpec;
 import intermediate.symtabimpl.Predefined;
 
 public class BackendFactory {
 
-    public static Backend createBackend(String operation, String inputPath) throws Exception {
+    public static Backend createBackend(String operation, DebuggerType type, String inputPath) throws Exception {
         if ("compile".equalsIgnoreCase(operation)) {
             return new CodeGenerator();
         } else if ("execute".equalsIgnoreCase(operation)) {
-            return new Executor(inputPath);
+            return new Executor(type, inputPath);
         } else {
             throw new Exception(("Backend factory invalid operation " + operation));
         }
@@ -29,8 +30,7 @@ public class BackendFactory {
                 return new CommandLineDebugger(backend, runtimeStack);
             }
             case GUI: {
-                // TODO: Will support GUI Debugger later
-                return null;
+                return new GUIDebugger(backend, runtimeStack);
             }
             default: {
                 return null;

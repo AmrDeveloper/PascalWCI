@@ -11,6 +11,8 @@ import static intermediate.symtabimpl.SymbolTableKeyImp.ROUTINE_ROUTINES;
 
 public class ParseTreePrinter {
 
+    public static final String BEGIN_ICODE = "!BEGIN===== INTERMEDIATE CODE =====";
+    public static final String END_ICODE = "!END===== INTERMEDIATE CODE =====";
     private static final int INDENT_WIDTH = 4;
     private static final int LINE_WIDTH = 80;
 

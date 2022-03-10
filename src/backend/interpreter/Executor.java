@@ -38,7 +38,7 @@ public class Executor extends Backend {
         standardOut = new PrintWriter(new PrintStream(System.out));
     }
 
-    public Executor(String inputPath) {
+    public Executor(DebuggerType type, String inputPath) {
         try {
             standardIn = (inputPath != null) && (!inputPath.isEmpty())
                     ? new PascalScanner(new Source(new BufferedReader(new FileReader(inputPath))))
@@ -47,7 +47,9 @@ public class Executor extends Backend {
         catch (IOException ignored) {
 
         }
-        debugger = BackendFactory.createDebugger(COMMAND_LINE, this, runtimeStack);
+
+        // TODO: control debugger mode issue
+        // debugger = BackendFactory.createDebugger(type, this, runtimeStack);
     }
 
     public Executor(Executor parent) {
@@ -56,7 +58,7 @@ public class Executor extends Backend {
     }
 
     @Override
-    public void process(ICode iCode, SymbolTableStack symbolTableStack) throws Exception {
+    public void process(ICode iCode, SymbolTableStack symbolTableStack) {
         this.symbolTableStack = symbolTableStack;
         long startTime = System.currentTimeMillis();
 

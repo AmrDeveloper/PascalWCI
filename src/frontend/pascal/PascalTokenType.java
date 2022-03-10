@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-public enum  PascalTokenType implements TokenType {
+public enum PascalTokenType implements TokenType {
     // Reserved words.
     AND, ARRAY, BEGIN, CASE, CONST, DIV, DO, DOWNTO, ELSE, END,
     FILE, FOR, FUNCTION, GOTO, IF, IN, LABEL, MOD, NIL, NOT,
@@ -20,6 +20,9 @@ public enum  PascalTokenType implements TokenType {
     GREATER_EQUALS(">="), GREATER_THAN(">"), LEFT_PAREN("("),
     RIGHT_PAREN(")"), LEFT_BRACKET("["), RIGHT_BRACKET("]"), LEFT_BRACE("{"), RIGHT_BRACE("}"),
     UP_ARROW("^"), DOT_DOT(".."),
+
+    COMMENT,
+    PREDEFINED,
 
     IDENTIFIER, INTEGER, REAL, STRING,
     ERROR, END_OF_FILE;

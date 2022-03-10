@@ -1,5 +1,6 @@
 import backend.Backend;
 import backend.BackendFactory;
+import backend.interpreter.DebuggerType;
 import backend.interpreter.RuntimeErrorCode;
 import frontend.FrontendFactory;
 import frontend.Parser;
@@ -18,7 +19,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import static backend.interpreter.DebuggerType.COMMAND_LINE;
+import static backend.interpreter.DebuggerType.GUI;
 import static frontend.pascal.PascalTokenType.STRING;
+import static ide.IDEControl.*;
 import static intermediate.symtabimpl.SymbolTableKeyImp.ROUTINE_ICODE;
 
 public class Pascal {
@@ -37,8 +41,12 @@ public class Pascal {
     private boolean call;             // true to print routine call tracing
     private boolean returnn;          // true to print routine return tracing
 
-    public Pascal(String operation, String sourcePath, String inputPath,  String flags) {
+    private DebuggerType debuggerType;
+
+    public Pascal(String operation, String debugger, String sourcePath, String inputPath,  String flags) {
         try {
+            debuggerType = debugger.equals("GUI") ? GUI : COMMAND_LINE;
+
             intermediate = flags.indexOf('i') > -1;
             xref = flags.indexOf('x') > -1;
             lines = flags.indexOf('l') > -1;
@@ -53,7 +61,7 @@ public class Pascal {
             parser = FrontendFactory.createParser("Pascal", "top-down", source);
             parser.addMessageListener(new ParserMessageListener());
 
-            backend = BackendFactory.createBackend(operation, inputPath);
+            backend = BackendFactory.createBackend(operation, debuggerType, inputPath);
             backend.addMessageListener(new BackendMessageListener());
 
             parser.parse();
@@ -71,15 +79,14 @@ public class Pascal {
                 }
 
                 if (intermediate) {
-                    ParseTreePrinter treePrinter =
-                            new ParseTreePrinter(System.out);
+                    ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
                     treePrinter.print(symbolTableStack);
                 }
 
                 backend.process(iCode, symbolTableStack);
             }
         } catch (Exception e) {
-            System.out.println("Internal Translator Error");
+            System.out.println("Internal Translator Error ");
             e.printStackTrace();
         }
     }
@@ -91,12 +98,20 @@ public class Pascal {
         try {
             String operation = args[0];
             
-            if (!("compile".equalsIgnoreCase(operation)) 
-                    || !("execute".equalsIgnoreCase(operation))) {
-                throw new Exception();
+            if (!("compile".equalsIgnoreCase(operation) || "execute".equalsIgnoreCase(operation))) {
+                throw new Exception("Invalid command : " + "execute".equalsIgnoreCase(operation));
             }
 
             int i = 0;
+            String debugger = "COMMAND";
+            if (++i < args.length) {
+                if ("GUI".equals(args[i])) {
+                    debugger = "GUI";
+                } else {
+                    --i;
+                }
+            }
+
             StringBuilder flags = new StringBuilder();
             
             // Flags
@@ -104,20 +119,20 @@ public class Pascal {
                 flags.append(args[i].substring(1));
             }
             
-            String sourcePath = null;
+            String sourcePath;
             String inputPath = null;
             
             // Source path
             if (i < args.length) {
                 sourcePath = args[i];
             } else {
-                throw new Exception();
+                throw new Exception("Can't find source path");
             }
             
             // Runtime input data file
             if (++i < args.length) {
                 inputPath = args[i];
-                
+
                 File inputFile = new File(inputPath);
                 if(!inputFile.exists()) {
                     System.out.println("Input file '" + inputPath + "' does not exist.");
@@ -125,15 +140,16 @@ public class Pascal {
                 }
             }
 
-            new Pascal(operation, sourcePath, inputPath, flags.toString());
+            new Pascal(operation, debugger, sourcePath, inputPath, flags.toString());
         } catch (Exception e) {
             System.out.println(USAGE);
         }
     }
 
     private static final String SOURCE_LINE_FORMAT = "%03d %s";
+    private static final String TAG_SOURCE_LINE_FORMAT = LISTING_TAG + "%03d %s";
 
-    private static class SourceMessageListener implements MessageListener {
+    private class SourceMessageListener implements MessageListener {
 
         @Override
         public void messageReceived(Message message) {
@@ -141,15 +157,17 @@ public class Pascal {
             MessageType type = message.getType();
             Object body[] = (Object[]) message.getBody();
 
-            switch (type) {
-                case SOURCE_LINE: {
-                    int lineNumber = (Integer) body[0];
-                    String lineText = (String) body[1];
+            if (type == MessageType.SOURCE_LINE) {
+                int lineNumber = (Integer) body[0];
+                String lineText = (String) body[1];
 
+                if (debuggerType.equals(GUI)) {
+                    System.out.println(String.format(TAG_SOURCE_LINE_FORMAT, lineNumber, lineText));
+                } else {
                     System.out.println(String.format(SOURCE_LINE_FORMAT, lineNumber, lineText));
-
-                    break;
                 }
+            } else {
+                System.out.println("Message type" + type.toString());
             }
         }
     }
@@ -158,12 +176,17 @@ public class Pascal {
     private static final String VALUE_FORMAT = ">>>                 value=%s";
     private static final int PREFIX_WIDTH = 5;
 
-    private static class ParserMessageListener implements MessageListener {
+    private class ParserMessageListener implements MessageListener {
 
         private static final String PARSER_SUMMARY_FORMAT =
                 "\n%,20d source lines." +
                         "\n%,20d syntax errors." +
                         "\n%,20.2f seconds total parsing time.\n";
+
+        private static final String TAG_PARSER_SUMMARY_FORMAT =
+                PARSER_TAG + "%,d source lines, %,d syntax errors, " +
+                        "%,.2f seconds total parsing time.\n";
+
 
         @Override
         public void messageReceived(Message message) {
@@ -201,20 +224,23 @@ public class Pascal {
                     String tokenText = (String) body[2];
                     String errorMessage = (String) body[3];
 
-                    int spaceCount = PREFIX_WIDTH + position;
-                    StringBuffer flagBuilder = new StringBuffer();
+                    StringBuilder flagBuffer = new StringBuilder();
+                    if (debuggerType.equals(COMMAND_LINE)) {
+                        int spaceCount = PREFIX_WIDTH + position;
 
-                    for (int i = 0; i < spaceCount; i++) {
-                        flagBuilder.append(" ");
+                        for (int i = 0; i < spaceCount; i++) {
+                            flagBuffer.append(" ");
+                        }
+
+                        flagBuffer.append("^\n*** ").append(errorMessage);
                     }
-
-                    flagBuilder.append("^\n*** ").append(errorMessage);
+                    else if (debuggerType.equals(GUI)) {
+                        flagBuffer.append(String.format(SYNTAX_TAG + "%d: %s", lineNumber, errorMessage));
+                    }
 
                     if (tokenText != null) {
-                        flagBuilder.append(" [at \"").append(tokenText).append("\"]");
+                        flagBuffer.append(" [at \"").append(tokenText).append("\"]");
                     }
-
-                    System.out.println(flagBuilder.toString());
                     break;
                 }
 
@@ -223,7 +249,12 @@ public class Pascal {
                     int statementCount = (int) body[0];
                     int syntaxErrors = (int) body[1];
                     float elapsedTime = (float) body[2];
-                    System.out.printf(PARSER_SUMMARY_FORMAT, statementCount, syntaxErrors, elapsedTime);
+
+                    if (debuggerType.equals(GUI)) {
+                        System.out.printf(TAG_PARSER_SUMMARY_FORMAT, statementCount, syntaxErrors, elapsedTime);
+                    } else {
+                        System.out.printf(PARSER_SUMMARY_FORMAT, statementCount, syntaxErrors, elapsedTime);
+                    }
                     break;
                 }
             }
@@ -238,6 +269,10 @@ public class Pascal {
     private static final String COMPILER_SUMMARY_FORMAT =
             "\n%,20d instructions generated." +
                     "\n%,20.2f seconds total code generation time.\n";
+
+    private static final String TAG_INTERPRETER_SUMMARY_FORMAT =
+            INTERPRETER_TAG + "%,d statements executed, %,d runtime errors, " +
+                    "%,.2f seconds total execution time.\n";
 
     private static final String LINE_FORMAT =
             ">>> AT LINE %03d\n";
@@ -315,8 +350,16 @@ public class Pascal {
                     int executionCount = (int) body[0];
                     int runtimeErrors = (int) body[1];
                     float elapsedTime = (float) body[2];
-                    System.out.printf(INTERPRETER_SUMMARY_FORMAT, executionCount, runtimeErrors, elapsedTime);
 
+                    if (debuggerType.equals(GUI)) {
+                        System.out.printf(TAG_INTERPRETER_SUMMARY_FORMAT,
+                                executionCount, runtimeErrors,
+                                elapsedTime);
+                    } else {
+                        System.out.printf(INTERPRETER_SUMMARY_FORMAT,
+                                executionCount, runtimeErrors,
+                                elapsedTime);
+                    }
                     break;
                 }
                 case COMPILER_SUMMARY: {
